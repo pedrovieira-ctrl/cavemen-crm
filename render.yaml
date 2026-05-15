@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: noivos-crm
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_VERSION
+        value: 22.5.0
