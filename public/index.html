@@ -197,6 +197,10 @@
   #toast { position: fixed; bottom: 24px; right: 24px; background: #1a1f36; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transform: translateY(80px); transition: transform 0.3s; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
   #toast.show { transform: translateY(0); }
 
+  /* OVERLAY FECHO PAINEL */
+  #panel-overlay { position: fixed; inset: 0; z-index: 199; display: none; cursor: pointer; }
+  #panel-overlay.open { display: block; }
+
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -558,6 +562,7 @@
   <div id="detail-content"></div>
 </div>
 
+<div id="panel-overlay" onclick="closeDetail()"></div>
 <div id="toast"></div>
 
 <script>
@@ -1114,9 +1119,13 @@ function openDetail(id) {
   `;
 
   document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('panel-overlay').classList.add('open');
 }
 
-function closeDetail() { document.getElementById('detail-panel').classList.remove('open'); }
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('panel-overlay').classList.remove('open');
+}
 
 function moveToNextStage(id) {
   const deal = DB.deals.find(d => d.id === id);
