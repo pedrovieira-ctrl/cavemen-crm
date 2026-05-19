@@ -462,14 +462,12 @@
         </div>
         <div class="form-group"><label>Etapa</label>
           <select id="d-etapa">
-            <option value="contacto">Contacto Inicial</option>
-            <option value="reuniao">Primeira Reunião</option>
-            <option value="medicoes">Medições</option>
-            <option value="proposta">Proposta Enviada</option>
-            <option value="contrato">Contrato Assinado</option>
+            <option value="primeira_visita">1ª Visita</option>
+            <option value="segunda_visita">2ª Visita</option>
             <option value="producao">Em Produção</option>
-            <option value="entrega">Pronto p/ Entrega</option>
-            <option value="concluido">Concluído</option>
+            <option value="primeira_prova">1ª Prova</option>
+            <option value="prova_final">Prova Final</option>
+            <option value="entrega">Entrega</option>
           </select>
         </div>
       </div>
@@ -528,6 +526,12 @@
       <div class="form-row">
         <div class="form-group"><label>Tipo</label>
           <select id="a-tipo">
+            <option value="ligar">📞 Ligar</option>
+            <option value="voltar_ligar">🔁 Voltar a ligar</option>
+            <option value="mensagem">💬 Enviar mensagem</option>
+            <option value="medidas">📏 Tirar Medidas</option>
+            <option value="enviar_producao">🧵 Enviar para produção</option>
+            <option value="forro">✨ Forro Personalizado</option>
             <option value="chamada">📞 Chamada</option>
             <option value="email">📧 Email</option>
             <option value="reuniao">🤝 Reunião</option>
@@ -569,14 +573,12 @@
 <script>
 // ===================== DATA =====================
 const STAGES = [
-  { id: 'contacto',  label: 'Contacto Inicial',    color: '#6b7280', bg: '#f3f4f6' },
-  { id: 'reuniao',   label: 'Primeira Reunião',     color: '#3b82f6', bg: '#eff6ff' },
-  { id: 'medicoes',  label: 'Medições',             color: '#8b5cf6', bg: '#f5f3ff' },
-  { id: 'proposta',  label: 'Proposta Enviada',     color: '#f59e0b', bg: '#fffbeb' },
-  { id: 'contrato',  label: 'Contrato Assinado',    color: '#10b981', bg: '#ecfdf5' },
-  { id: 'producao',  label: 'Em Produção',          color: '#ec4899', bg: '#fdf2f8' },
-  { id: 'entrega',   label: 'Pronto p/ Entrega',    color: '#06b6d4', bg: '#ecfeff' },
-  { id: 'concluido', label: 'Concluído',            color: '#059669', bg: '#d1fae5' },
+  { id: 'primeira_visita', label: '1ª Visita',           color: '#6b7280', bg: '#f3f4f6' },
+  { id: 'segunda_visita',  label: '2ª Visita',           color: '#3b82f6', bg: '#eff6ff' },
+  { id: 'producao',        label: 'Em Produção',         color: '#ec4899', bg: '#fdf2f8' },
+  { id: 'primeira_prova',  label: '1ª Prova',            color: '#8b5cf6', bg: '#f5f3ff' },
+  { id: 'prova_final',     label: 'Prova Final',         color: '#f59e0b', bg: '#fffbeb' },
+  { id: 'entrega',         label: 'Entrega',             color: '#059669', bg: '#d1fae5' },
 ];
 
 let DB = { deals: [], activities: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } };
@@ -614,14 +616,14 @@ function loadSampleData() {
   const future = (days) => { const d = new Date(today); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0]; };
 
   DB.deals = [
-    { id: '1', nome: 'Ricardo Almeida', email: 'ricardo@gmail.com', tel: '912 345 678', casamento: future(45), tipo: 'Slim', cor: 'Navy Blue', tecido: 'Lã Italiana', valor: 950, sinal: 300, stage: 'medicoes', origem: 'Instagram', notas: 'Quer lenço de bolso em bordô', medidas: { peito: 96, cintura: 82, anca: 98, manga: 64, entrep: 82, altura: 178 }, criado: future(-15), atualizado: future(-2) },
-    { id: '2', nome: 'Miguel Santos', email: 'miguel.s@hotmail.com', tel: '913 456 789', casamento: future(90), tipo: 'Clássico', cor: 'Cinzento Chumbo', tecido: 'Super 120s', valor: 1200, sinal: 500, stage: 'proposta', origem: 'Recomendação', notas: 'Casamento em Sintra, outdoor', medidas: { peito: 102, cintura: 88, anca: 104, manga: 66, entrep: 80, altura: 182 }, criado: future(-20), atualizado: future(-5) },
-    { id: '3', nome: 'Pedro Ferreira', email: 'pedro.f@gmail.com', tel: '914 567 890', casamento: future(120), tipo: 'Smoking', cor: 'Preto', tecido: 'Seda Italiana', valor: 1800, sinal: 600, stage: 'contrato', origem: 'Feira', notas: 'Cerimónia formal, hotel 5*', medidas: { peito: 98, cintura: 84, anca: 100, manga: 65, entrep: 81, altura: 180 }, criado: future(-30), atualizado: future(-3) },
+    { id: '1', nome: 'Ricardo Almeida', email: 'ricardo@gmail.com', tel: '912 345 678', casamento: future(45), tipo: 'Slim', cor: 'Navy Blue', tecido: 'Lã Italiana', valor: 950, sinal: 300, stage: 'primeira_prova', origem: 'Instagram', notas: 'Quer lenço de bolso em bordô', medidas: { peito: 96, cintura: 82, anca: 98, manga: 64, entrep: 82, altura: 178 }, criado: future(-15), atualizado: future(-2) },
+    { id: '2', nome: 'Miguel Santos', email: 'miguel.s@hotmail.com', tel: '913 456 789', casamento: future(90), tipo: 'Clássico', cor: 'Cinzento Chumbo', tecido: 'Super 120s', valor: 1200, sinal: 500, stage: 'segunda_visita', origem: 'Recomendação', notas: 'Casamento em Sintra, outdoor', medidas: { peito: 102, cintura: 88, anca: 104, manga: 66, entrep: 80, altura: 182 }, criado: future(-20), atualizado: future(-5) },
+    { id: '3', nome: 'Pedro Ferreira', email: 'pedro.f@gmail.com', tel: '914 567 890', casamento: future(120), tipo: 'Smoking', cor: 'Preto', tecido: 'Seda Italiana', valor: 1800, sinal: 600, stage: 'producao', origem: 'Feira', notas: 'Cerimónia formal, hotel 5*', medidas: { peito: 98, cintura: 84, anca: 100, manga: 65, entrep: 81, altura: 180 }, criado: future(-30), atualizado: future(-3) },
     { id: '4', nome: 'André Costa', email: 'andre@email.pt', tel: '915 678 901', casamento: future(20), tipo: 'Oxford', cor: 'Azul Royal', tecido: 'Algodão Premium', valor: 750, sinal: 750, stage: 'entrega', origem: 'Google', notas: 'Urgente! Casamento daqui a 3 semanas', medidas: { peito: 94, cintura: 80, anca: 96, manga: 63, entrep: 79, altura: 175 }, criado: future(-60), atualizado: future(-1) },
-    { id: '5', nome: 'Carlos Nunes', email: 'carlos.n@gmail.com', tel: '916 789 012', casamento: future(200), tipo: 'Slim', cor: 'Verde Musgo', tecido: 'Lã Merino', valor: 880, sinal: 0, stage: 'reuniao', origem: 'Website', notas: 'Noiva escolhe paleta de cores', medidas: {}, criado: future(-5), atualizado: future(-5) },
-    { id: '6', nome: 'Tiago Rodrigues', email: 'tiago.r@email.com', tel: '917 890 123', casamento: future(150), tipo: 'Clássico', cor: 'Bordeaux', tecido: 'Flanela', valor: 1050, sinal: 400, stage: 'producao', origem: 'Recomendação', notas: 'Botões personalizados com iniciais', medidas: { peito: 100, cintura: 86, anca: 102, manga: 65, entrep: 83, altura: 181 }, criado: future(-45), atualizado: future(-4) },
-    { id: '7', nome: 'Bruno Lopes', email: 'bruno.l@gmail.com', tel: '918 901 234', casamento: future(10), tipo: 'Slim', cor: 'Cinzento Claro', tecido: 'Linho', valor: 650, sinal: 650, stage: 'concluido', origem: 'Instagram', notas: 'Entregue com sucesso', medidas: { peito: 90, cintura: 76, anca: 92, manga: 62, entrep: 78, altura: 172 }, criado: future(-90), atualizado: future(-10) },
-    { id: '8', nome: 'Gonçalo Silva', email: 'goncalo@gmail.com', tel: '919 012 345', casamento: future(300), tipo: 'Casual', cor: 'Bege', tecido: 'Linho-Algodão', valor: 580, sinal: 0, stage: 'contacto', origem: 'Facebook', notas: 'Casamento praia, estilo relaxado', medidas: {}, criado: future(-2), atualizado: future(-2) },
+    { id: '5', nome: 'Carlos Nunes', email: 'carlos.n@gmail.com', tel: '916 789 012', casamento: future(200), tipo: 'Slim', cor: 'Verde Musgo', tecido: 'Lã Merino', valor: 880, sinal: 0, stage: 'primeira_visita', origem: 'Website', notas: 'Noiva escolhe paleta de cores', medidas: {}, criado: future(-5), atualizado: future(-5) },
+    { id: '6', nome: 'Tiago Rodrigues', email: 'tiago.r@email.com', tel: '917 890 123', casamento: future(150), tipo: 'Clássico', cor: 'Bordeaux', tecido: 'Flanela', valor: 1050, sinal: 400, stage: 'prova_final', origem: 'Recomendação', notas: 'Botões personalizados com iniciais', medidas: { peito: 100, cintura: 86, anca: 102, manga: 65, entrep: 83, altura: 181 }, criado: future(-45), atualizado: future(-4) },
+    { id: '7', nome: 'Bruno Lopes', email: 'bruno.l@gmail.com', tel: '918 901 234', casamento: future(10), tipo: 'Slim', cor: 'Cinzento Claro', tecido: 'Linho', valor: 650, sinal: 650, stage: 'entrega', origem: 'Instagram', notas: 'Entregue com sucesso', medidas: { peito: 90, cintura: 76, anca: 92, manga: 62, entrep: 78, altura: 172 }, criado: future(-90), atualizado: future(-10) },
+    { id: '8', nome: 'Gonçalo Silva', email: 'goncalo@gmail.com', tel: '919 012 345', casamento: future(300), tipo: 'Casual', cor: 'Bege', tecido: 'Linho-Algodão', valor: 580, sinal: 0, stage: 'primeira_visita', origem: 'Facebook', notas: 'Casamento praia, estilo relaxado', medidas: {}, criado: future(-2), atualizado: future(-2) },
   ];
   DB.activities = [
     { id: 'a1', tipo: 'chamada', titulo: 'Confirmar data da prova de fato', dealId: '1', data: future(2), hora: '10:00', notas: 'Ligar para o Ricardo', concluida: false, criado: future(-1) },
@@ -718,7 +720,7 @@ function renderDashboard() {
   const pendActs = DB.activities.filter(a => !a.concluida).slice(0, 4);
   document.getElementById('dash-activities').innerHTML = pendActs.length ? pendActs.map(a => {
     const deal = DB.deals.find(d => d.id === a.dealId);
-    const icons = { chamada:'📞', email:'📧', reuniao:'🤝', prova:'👔', entrega:'📦', tarefa:'✅' };
+    const icons = { ligar:'📞', voltar_ligar:'🔁', mensagem:'💬', medidas:'📏', enviar_producao:'🧵', forro:'✨', chamada:'📞', email:'📧', reuniao:'🤝', prova:'👔', entrega:'📦', tarefa:'✅' };
     return `<div style="display:flex; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
       <span style="font-size:20px;">${icons[a.tipo]||'📋'}</span>
       <div style="flex:1;">
@@ -918,7 +920,7 @@ function renderAtividades() {
   acts = acts.sort((a,b) => (a.data||'') < (b.data||'') ? -1 : 1);
 
   const icons = { chamada:'📞', email:'📧', reuniao:'🤝', prova:'👔', entrega:'📦', tarefa:'✅' };
-  const colors = { chamada:'#dbeafe', email:'#fce7f3', reuniao:'#d1fae5', prova:'#ede9fe', entrega:'#fef3c7', tarefa:'#f3f4f6' };
+  const colors = { ligar:'#dbeafe', voltar_ligar:'#e0e7ff', mensagem:'#dcfce7', medidas:'#fef3c7', enviar_producao:'#fdf2f8', forro:'#fefce8', chamada:'#dbeafe', email:'#fce7f3', reuniao:'#d1fae5', prova:'#ede9fe', entrega:'#fef3c7', tarefa:'#f3f4f6' };
 
   document.getElementById('activities-list').innerHTML = acts.length ? acts.map(a => {
     const deal = DB.deals.find(d => d.id === a.dealId);
@@ -1104,7 +1106,7 @@ function openDetail(id) {
         <button class="btn btn-outline btn-sm" onclick="openNewActivityModal('${d.id}')">+ Adicionar</button>
       </div>
       ${dealActivities.length ? dealActivities.map(a => {
-        const icons = { chamada:'📞', email:'📧', reuniao:'🤝', prova:'👔', entrega:'📦', tarefa:'✅' };
+        const icons = { ligar:'📞', voltar_ligar:'🔁', mensagem:'💬', medidas:'📏', enviar_producao:'🧵', forro:'✨', chamada:'📞', email:'📧', reuniao:'🤝', prova:'👔', entrega:'📦', tarefa:'✅' };
         return `<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
           <span>${icons[a.tipo]||'📋'}</span>
           <div style="flex:1;"><div style="font-size:13px;font-weight:600;${a.concluida?'text-decoration:line-through;opacity:0.5;':''}">${a.titulo}</div><div style="font-size:11px;color:var(--text-muted);">${formatDate(a.data)}${a.hora?' · '+a.hora:''}</div></div>
@@ -1168,7 +1170,7 @@ function editDeal(id) {
   document.getElementById('d-tecido').value = d.tecido || '';
   document.getElementById('d-valor').value = d.valor || '';
   document.getElementById('d-sinal').value = d.sinal || '';
-  document.getElementById('d-etapa').value = d.stage || 'contacto';
+  document.getElementById('d-etapa').value = d.stage || 'primeira_visita';
   document.getElementById('d-origem').value = d.origem || 'Recomendação';
   document.getElementById('d-notas').value = d.notas || '';
   const m = d.medidas || {};
