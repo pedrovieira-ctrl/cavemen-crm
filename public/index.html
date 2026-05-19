@@ -197,6 +197,18 @@
   #toast { position: fixed; bottom: 24px; right: 24px; background: #1a1f36; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transform: translateY(80px); transition: transform 0.3s; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
   #toast.show { transform: translateY(0); }
 
+  /* FILTROS LOJA PIPELINE */
+  .loja-filter-btn { padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: var(--card); color: var(--text-muted); transition: all 0.15s; }
+  .loja-filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .loja-filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .loja-filter-btn[data-loja="Guimarães"].active { background: #059669; border-color: #059669; }
+  .loja-filter-btn[data-loja="Braga"].active { background: #dc2626; border-color: #dc2626; }
+  .loja-filter-btn[data-loja="Porto"].active { background: #2563eb; border-color: #2563eb; }
+  .loja-tag { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; }
+  .loja-guimaraes { background:#d1fae5; color:#065f46; }
+  .loja-braga { background:#fee2e2; color:#991b1b; }
+  .loja-porto { background:#dbeafe; color:#1e40af; }
+
   /* OVERLAY FECHO PAINEL */
   #panel-overlay { position: fixed; inset: 0; z-index: 199; display: none; cursor: pointer; }
   #panel-overlay.open { display: block; }
@@ -282,19 +294,24 @@
 
     <!-- PIPELINE -->
     <div id="view-pipeline" class="view">
-      <div class="pipeline-header" style="padding-bottom:16px; display:flex; align-items:center; justify-content:space-between;">
-        <div>
-          <span style="font-size:13px; color:var(--text-muted);">Arrastar cards para mover entre etapas</span>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <select id="pipeline-filter-tipo" class="form-group select" style="border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:13px; background:var(--card);">
-            <option value="">Todos os fatos</option>
-            <option value="Slim">Slim</option>
-            <option value="Clássico">Clássico</option>
-            <option value="Oxford">Oxford</option>
-            <option value="Smoking">Smoking</option>
-          </select>
-          <button class="btn btn-primary btn-sm" onclick="openNewDealModal()">+ Novo Negócio</button>
+      <div class="pipeline-header" style="padding-bottom:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="loja-filter-btn active" data-loja="" onclick="setLojaFilter(this)">🏪 Todas as Lojas</button>
+            <button class="loja-filter-btn" data-loja="Guimarães" onclick="setLojaFilter(this)">📍 Guimarães</button>
+            <button class="loja-filter-btn" data-loja="Braga" onclick="setLojaFilter(this)">📍 Braga</button>
+            <button class="loja-filter-btn" data-loja="Porto" onclick="setLojaFilter(this)">📍 Porto</button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <select id="pipeline-filter-tipo" style="border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:13px; background:var(--card);">
+              <option value="">Todos os fatos</option>
+              <option value="Slim">Slim</option>
+              <option value="Clássico">Clássico</option>
+              <option value="Oxford">Oxford</option>
+              <option value="Smoking">Smoking</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openNewDealModal()">+ Novo Negócio</button>
+          </div>
         </div>
       </div>
       <div class="pipeline-board" id="pipeline-board"></div>
@@ -471,6 +488,15 @@
           </select>
         </div>
       </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Loja *</label>
+          <select id="d-loja">
+            <option value="Guimarães">📍 Guimarães</option>
+            <option value="Braga">📍 Braga</option>
+            <option value="Porto">📍 Porto</option>
+          </select>
+        </div>
+      </div>
 
       <div class="form-section">Detalhes do Fato</div>
       <div class="form-row three">
@@ -584,6 +610,7 @@ const STAGES = [
 let DB = { deals: [], activities: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } };
 let editingDealId = null;
 let editingActivityId = null;
+let activeLojaFilter = '';
 let calCurrentDate = new Date();
 let activityFilter = 'pendente';
 let chartRevenue = null, chartPipeline = null, chartTipos = null, chartConversion = null, chartOrigem = null;
@@ -616,14 +643,14 @@ function loadSampleData() {
   const future = (days) => { const d = new Date(today); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0]; };
 
   DB.deals = [
-    { id: '1', nome: 'Ricardo Almeida', email: 'ricardo@gmail.com', tel: '912 345 678', casamento: future(45), tipo: 'Slim', cor: 'Navy Blue', tecido: 'Lã Italiana', valor: 950, sinal: 300, stage: 'primeira_prova', origem: 'Instagram', notas: 'Quer lenço de bolso em bordô', medidas: { peito: 96, cintura: 82, anca: 98, manga: 64, entrep: 82, altura: 178 }, criado: future(-15), atualizado: future(-2) },
-    { id: '2', nome: 'Miguel Santos', email: 'miguel.s@hotmail.com', tel: '913 456 789', casamento: future(90), tipo: 'Clássico', cor: 'Cinzento Chumbo', tecido: 'Super 120s', valor: 1200, sinal: 500, stage: 'segunda_visita', origem: 'Recomendação', notas: 'Casamento em Sintra, outdoor', medidas: { peito: 102, cintura: 88, anca: 104, manga: 66, entrep: 80, altura: 182 }, criado: future(-20), atualizado: future(-5) },
-    { id: '3', nome: 'Pedro Ferreira', email: 'pedro.f@gmail.com', tel: '914 567 890', casamento: future(120), tipo: 'Smoking', cor: 'Preto', tecido: 'Seda Italiana', valor: 1800, sinal: 600, stage: 'producao', origem: 'Feira', notas: 'Cerimónia formal, hotel 5*', medidas: { peito: 98, cintura: 84, anca: 100, manga: 65, entrep: 81, altura: 180 }, criado: future(-30), atualizado: future(-3) },
-    { id: '4', nome: 'André Costa', email: 'andre@email.pt', tel: '915 678 901', casamento: future(20), tipo: 'Oxford', cor: 'Azul Royal', tecido: 'Algodão Premium', valor: 750, sinal: 750, stage: 'entrega', origem: 'Google', notas: 'Urgente! Casamento daqui a 3 semanas', medidas: { peito: 94, cintura: 80, anca: 96, manga: 63, entrep: 79, altura: 175 }, criado: future(-60), atualizado: future(-1) },
-    { id: '5', nome: 'Carlos Nunes', email: 'carlos.n@gmail.com', tel: '916 789 012', casamento: future(200), tipo: 'Slim', cor: 'Verde Musgo', tecido: 'Lã Merino', valor: 880, sinal: 0, stage: 'primeira_visita', origem: 'Website', notas: 'Noiva escolhe paleta de cores', medidas: {}, criado: future(-5), atualizado: future(-5) },
-    { id: '6', nome: 'Tiago Rodrigues', email: 'tiago.r@email.com', tel: '917 890 123', casamento: future(150), tipo: 'Clássico', cor: 'Bordeaux', tecido: 'Flanela', valor: 1050, sinal: 400, stage: 'prova_final', origem: 'Recomendação', notas: 'Botões personalizados com iniciais', medidas: { peito: 100, cintura: 86, anca: 102, manga: 65, entrep: 83, altura: 181 }, criado: future(-45), atualizado: future(-4) },
-    { id: '7', nome: 'Bruno Lopes', email: 'bruno.l@gmail.com', tel: '918 901 234', casamento: future(10), tipo: 'Slim', cor: 'Cinzento Claro', tecido: 'Linho', valor: 650, sinal: 650, stage: 'entrega', origem: 'Instagram', notas: 'Entregue com sucesso', medidas: { peito: 90, cintura: 76, anca: 92, manga: 62, entrep: 78, altura: 172 }, criado: future(-90), atualizado: future(-10) },
-    { id: '8', nome: 'Gonçalo Silva', email: 'goncalo@gmail.com', tel: '919 012 345', casamento: future(300), tipo: 'Casual', cor: 'Bege', tecido: 'Linho-Algodão', valor: 580, sinal: 0, stage: 'primeira_visita', origem: 'Facebook', notas: 'Casamento praia, estilo relaxado', medidas: {}, criado: future(-2), atualizado: future(-2) },
+    { id: '1', nome: 'Ricardo Almeida', email: 'ricardo@gmail.com', tel: '912 345 678', casamento: future(45), tipo: 'Slim', cor: 'Navy Blue', tecido: 'Lã Italiana', valor: 950, sinal: 300, stage: 'primeira_prova', loja: 'Guimarães', origem: 'Instagram', notas: 'Quer lenço de bolso em bordô', medidas: { peito: 96, cintura: 82, anca: 98, manga: 64, entrep: 82, altura: 178 }, criado: future(-15), atualizado: future(-2) },
+    { id: '2', nome: 'Miguel Santos', email: 'miguel.s@hotmail.com', tel: '913 456 789', casamento: future(90), tipo: 'Clássico', cor: 'Cinzento Chumbo', tecido: 'Super 120s', valor: 1200, sinal: 500, stage: 'segunda_visita', loja: 'Porto', origem: 'Recomendação', notas: 'Casamento em Sintra, outdoor', medidas: { peito: 102, cintura: 88, anca: 104, manga: 66, entrep: 80, altura: 182 }, criado: future(-20), atualizado: future(-5) },
+    { id: '3', nome: 'Pedro Ferreira', email: 'pedro.f@gmail.com', tel: '914 567 890', casamento: future(120), tipo: 'Smoking', cor: 'Preto', tecido: 'Seda Italiana', valor: 1800, sinal: 600, stage: 'producao', loja: 'Braga', origem: 'Feira', notas: 'Cerimónia formal, hotel 5*', medidas: { peito: 98, cintura: 84, anca: 100, manga: 65, entrep: 81, altura: 180 }, criado: future(-30), atualizado: future(-3) },
+    { id: '4', nome: 'André Costa', email: 'andre@email.pt', tel: '915 678 901', casamento: future(20), tipo: 'Oxford', cor: 'Azul Royal', tecido: 'Algodão Premium', valor: 750, sinal: 750, stage: 'entrega', loja: 'Porto', origem: 'Google', notas: 'Urgente! Casamento daqui a 3 semanas', medidas: { peito: 94, cintura: 80, anca: 96, manga: 63, entrep: 79, altura: 175 }, criado: future(-60), atualizado: future(-1) },
+    { id: '5', nome: 'Carlos Nunes', email: 'carlos.n@gmail.com', tel: '916 789 012', casamento: future(200), tipo: 'Slim', cor: 'Verde Musgo', tecido: 'Lã Merino', valor: 880, sinal: 0, stage: 'primeira_visita', loja: 'Guimarães', origem: 'Website', notas: 'Noiva escolhe paleta de cores', medidas: {}, criado: future(-5), atualizado: future(-5) },
+    { id: '6', nome: 'Tiago Rodrigues', email: 'tiago.r@email.com', tel: '917 890 123', casamento: future(150), tipo: 'Clássico', cor: 'Bordeaux', tecido: 'Flanela', valor: 1050, sinal: 400, stage: 'prova_final', loja: 'Braga', origem: 'Recomendação', notas: 'Botões personalizados com iniciais', medidas: { peito: 100, cintura: 86, anca: 102, manga: 65, entrep: 83, altura: 181 }, criado: future(-45), atualizado: future(-4) },
+    { id: '7', nome: 'Bruno Lopes', email: 'bruno.l@gmail.com', tel: '918 901 234', casamento: future(10), tipo: 'Slim', cor: 'Cinzento Claro', tecido: 'Linho', valor: 650, sinal: 650, stage: 'entrega', loja: 'Guimarães', origem: 'Instagram', notas: 'Entregue com sucesso', medidas: { peito: 90, cintura: 76, anca: 92, manga: 62, entrep: 78, altura: 172 }, criado: future(-90), atualizado: future(-10) },
+    { id: '8', nome: 'Gonçalo Silva', email: 'goncalo@gmail.com', tel: '919 012 345', casamento: future(300), tipo: 'Casual', cor: 'Bege', tecido: 'Linho-Algodão', valor: 580, sinal: 0, stage: 'primeira_visita', loja: 'Porto', origem: 'Facebook', notas: 'Casamento praia, estilo relaxado', medidas: {}, criado: future(-2), atualizado: future(-2) },
   ];
   DB.activities = [
     { id: 'a1', tipo: 'chamada', titulo: 'Confirmar data da prova de fato', dealId: '1', data: future(2), hora: '10:00', notas: 'Ligar para o Ricardo', concluida: false, criado: future(-1) },
@@ -768,10 +795,19 @@ function renderChartPipeline() {
 }
 
 // ===================== PIPELINE =====================
+function setLojaFilter(btn) {
+  document.querySelectorAll('.loja-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeLojaFilter = btn.dataset.loja;
+  renderPipeline();
+}
+
 function renderPipeline() {
   const board = document.getElementById('pipeline-board');
   const filterTipo = document.getElementById('pipeline-filter-tipo')?.value || '';
-  const deals = filterTipo ? DB.deals.filter(d => d.tipo === filterTipo) : DB.deals;
+  let deals = DB.deals;
+  if (activeLojaFilter) deals = deals.filter(d => d.loja === activeLojaFilter);
+  if (filterTipo) deals = deals.filter(d => d.tipo === filterTipo);
 
   board.innerHTML = STAGES.map(stage => {
     const stageDeals = deals.filter(d => d.stage === stage.id);
@@ -814,6 +850,7 @@ function renderDealCard(d) {
       ${d.casamento ? `<div class="deal-wedding">💍 ${formatDate(d.casamento)}${daysUntil !== null ? ` · <span class="${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}">${daysUntil}d</span>` : ''}</div>` : ''}
       <div class="deal-value">€${(d.valor||0).toLocaleString('pt')}</div>
       <div class="deal-tags">
+        ${d.loja ? `<span class="loja-tag loja-${(d.loja||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}">${d.loja}</span>` : ''}
         ${d.tipo ? `<span class="tag tag-fato">${d.tipo}</span>` : ''}
         ${daysUntil !== null && daysUntil <= 30 ? '<span class="tag tag-urgente">⚡ Urgente</span>' : ''}
         ${d.sinal >= d.valor && d.valor > 0 ? '<span class="tag tag-sinal">✓ Pago</span>' : (d.sinal > 0 ? '<span class="tag tag-sinal">~ Sinal</span>' : '')}
@@ -1150,6 +1187,7 @@ function openNewDealModal(stage = 'contacto') {
   document.getElementById('modal-deal-title').textContent = 'Novo Negócio';
   ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas'].forEach(id => document.getElementById(id).value = '');
   ['d-valor','d-sinal'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('d-loja').value = activeLojaFilter || 'Guimarães';
   ['m-peito','m-cintura','m-anca','m-manga','m-entrep','m-altura'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('d-etapa').value = stage;
   document.getElementById('d-casamento').value = '';
@@ -1171,6 +1209,7 @@ function editDeal(id) {
   document.getElementById('d-valor').value = d.valor || '';
   document.getElementById('d-sinal').value = d.sinal || '';
   document.getElementById('d-etapa').value = d.stage || 'primeira_visita';
+  document.getElementById('d-loja').value = d.loja || 'Guimarães';
   document.getElementById('d-origem').value = d.origem || 'Recomendação';
   document.getElementById('d-notas').value = d.notas || '';
   const m = d.medidas || {};
@@ -1197,6 +1236,7 @@ function saveDeal() {
     valor: parseFloat(document.getElementById('d-valor').value) || 0,
     sinal: parseFloat(document.getElementById('d-sinal').value) || 0,
     stage: document.getElementById('d-etapa').value,
+    loja: document.getElementById('d-loja').value,
     origem: document.getElementById('d-origem').value,
     notas: document.getElementById('d-notas').value,
     medidas: {
