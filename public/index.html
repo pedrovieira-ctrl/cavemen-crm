@@ -197,6 +197,12 @@
   #toast { position: fixed; bottom: 24px; right: 24px; background: #1a1f36; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; transform: translateY(80px); transition: transform 0.3s; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
   #toast.show { transform: translateY(0); }
 
+  /* ACESSÓRIOS CHECKBOXES */
+  .acess-check { display:flex; align-items:center; gap:6px; padding:8px 14px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.15s; background:var(--card); }
+  .acess-check:hover { border-color:var(--accent); color:var(--accent); }
+  .acess-check input[type=checkbox] { accent-color:var(--accent); width:15px; height:15px; cursor:pointer; }
+  .acess-check:has(input:checked) { background:#ede9fe; border-color:var(--accent); color:var(--accent); }
+
   /* FILTROS LOJA PIPELINE */
   .loja-filter-btn { padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: var(--card); color: var(--text-muted); transition: all 0.15s; }
   .loja-filter-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -499,19 +505,57 @@
       </div>
 
       <div class="form-section">Detalhes do Fato</div>
-      <div class="form-row three">
+      <div class="form-row">
         <div class="form-group"><label>Tipo de Fato</label>
           <select id="d-tipo">
-            <option value="Slim">Slim Fit</option>
-            <option value="Clássico">Clássico</option>
-            <option value="Oxford">Oxford</option>
-            <option value="Smoking">Smoking</option>
-            <option value="Casual">Casual</option>
+            <option value="">— Selecionar —</option>
+            <option value="Veca">Veca</option>
+            <option value="Cave">Cave</option>
+            <option value="Belo2f">Belo2f</option>
+            <option value="Zorro">Zorro</option>
+            <option value="Corso">Corso</option>
+            <option value="Sato">Sato</option>
+            <option value="Miró (Smoking)">Miró (Smoking)</option>
+            <option value="Mogli">Mogli</option>
+            <option value="Lunda">Lunda</option>
           </select>
         </div>
+        <div class="form-group"><label>Colete</label>
+          <select id="d-colete">
+            <option value="">— Sem colete —</option>
+            <option value="Havana">Havana</option>
+            <option value="Sapiens">Sapiens</option>
+            <option value="Sinios">Sinios</option>
+            <option value="Madrid">Madrid</option>
+            <option value="Europa">Europa</option>
+            <option value="Féria">Féria</option>
+            <option value="Délia">Délia</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label>Cor Principal</label><input id="d-cor" type="text" placeholder="Ex: Navy Blue"></div>
         <div class="form-group"><label>Tecido</label><input id="d-tecido" type="text" placeholder="Ex: Lã Italiana"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label>Fatos de Coleção</label><input id="d-fatocolecao" type="text" placeholder="Nome da coleção..."></div>
+        <div class="form-group"><label>Forro Personalizado</label><input id="d-forro" type="text" placeholder="Descrição do forro..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Botões de Punho</label><input id="d-botoespunho" type="text" placeholder="Ex: Iniciais gravadas..."></div>
+        <div class="form-group"><label>Baixo de Gola</label><input id="d-baixogola" type="text" placeholder="Ex: Veludo preto..."></div>
+      </div>
+
+      <div class="form-section">Acessórios</div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+        <label class="acess-check"><input type="checkbox" id="ac-gravata"> 👔 Gravata</label>
+        <label class="acess-check"><input type="checkbox" id="ac-sapatos"> 👞 Sapatos</label>
+        <label class="acess-check"><input type="checkbox" id="ac-camisa"> 👕 Camisa</label>
+        <label class="acess-check"><input type="checkbox" id="ac-meias"> 🧦 Meias</label>
+        <label class="acess-check"><input type="checkbox" id="ac-cinto"> 🪡 Cinto</label>
+      </div>
+
+      <div class="form-section">Financeiro</div>
       <div class="form-row">
         <div class="form-group"><label>Valor Total (€)</label><input id="d-valor" type="number" placeholder="0.00" step="0.01"></div>
         <div class="form-group"><label>Sinal Pago (€)</label><input id="d-sinal" type="number" placeholder="0.00" step="0.01"></div>
@@ -1112,9 +1156,21 @@ function openDetail(id) {
 
     <div class="detail-section">
       <h4>Detalhes do Fato</h4>
-      <div class="detail-field"><span class="df-label">Tipo</span><span class="df-value"><span class="tag tag-fato">${d.tipo||'-'}</span></span></div>
-      <div class="detail-field"><span class="df-label">Cor</span><span class="df-value">${d.cor||'-'}</span></div>
-      <div class="detail-field"><span class="df-label">Tecido</span><span class="df-value">${d.tecido||'-'}</span></div>
+      ${d.tipo ? `<div class="detail-field"><span class="df-label">Tipo de Fato</span><span class="df-value"><span class="tag tag-fato">${d.tipo}</span></span></div>` : ''}
+      ${d.colete ? `<div class="detail-field"><span class="df-label">Colete</span><span class="df-value">${d.colete}</span></div>` : ''}
+      ${d.cor ? `<div class="detail-field"><span class="df-label">Cor</span><span class="df-value">${d.cor}</span></div>` : ''}
+      ${d.tecido ? `<div class="detail-field"><span class="df-label">Tecido</span><span class="df-value">${d.tecido}</span></div>` : ''}
+      ${d.fatocolecao ? `<div class="detail-field"><span class="df-label">Fatos de Coleção</span><span class="df-value">${d.fatocolecao}</span></div>` : ''}
+      ${d.forro ? `<div class="detail-field"><span class="df-label">Forro Personalizado</span><span class="df-value">${d.forro}</span></div>` : ''}
+      ${d.botoespunho ? `<div class="detail-field"><span class="df-label">Botões de Punho</span><span class="df-value">${d.botoespunho}</span></div>` : ''}
+      ${d.baixogola ? `<div class="detail-field"><span class="df-label">Baixo de Gola</span><span class="df-value">${d.baixogola}</span></div>` : ''}
+      ${d.acessorios && d.acessorios.length > 0 ? `
+      <div class="detail-field" style="align-items:flex-start;">
+        <span class="df-label">Acessórios</span>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;">
+          ${d.acessorios.map(a => `<span class="tag tag-fato">${a}</span>`).join('')}
+        </div>
+      </div>` : ''}
     </div>
 
     <div class="detail-section">
@@ -1185,8 +1241,10 @@ function moveToNextStage(id) {
 function openNewDealModal(stage = 'contacto') {
   editingDealId = null;
   document.getElementById('modal-deal-title').textContent = 'Novo Negócio';
-  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas'].forEach(id => document.getElementById(id).value = '');
+  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-forro','d-botoespunho','d-baixogola'].forEach(id => document.getElementById(id).value = '');
   ['d-valor','d-sinal'].forEach(id => document.getElementById(id).value = '');
+  ['d-tipo','d-colete'].forEach(id => document.getElementById(id).value = '');
+  ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
   document.getElementById('d-loja').value = activeLojaFilter || 'Guimarães';
   ['m-peito','m-cintura','m-anca','m-manga','m-entrep','m-altura'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('d-etapa').value = stage;
@@ -1203,9 +1261,20 @@ function editDeal(id) {
   document.getElementById('d-email').value = d.email || '';
   document.getElementById('d-tel').value = d.tel || '';
   document.getElementById('d-casamento').value = d.casamento || '';
-  document.getElementById('d-tipo').value = d.tipo || 'Slim';
+  document.getElementById('d-tipo').value = d.tipo || '';
+  document.getElementById('d-colete').value = d.colete || '';
   document.getElementById('d-cor').value = d.cor || '';
   document.getElementById('d-tecido').value = d.tecido || '';
+  document.getElementById('d-fatocolecao').value = d.fatocolecao || '';
+  document.getElementById('d-forro').value = d.forro || '';
+  document.getElementById('d-botoespunho').value = d.botoespunho || '';
+  document.getElementById('d-baixogola').value = d.baixogola || '';
+  const ac = d.acessorios || [];
+  document.getElementById('ac-gravata').checked = ac.includes('Gravata');
+  document.getElementById('ac-sapatos').checked = ac.includes('Sapatos');
+  document.getElementById('ac-camisa').checked = ac.includes('Camisa');
+  document.getElementById('ac-meias').checked = ac.includes('Meias');
+  document.getElementById('ac-cinto').checked = ac.includes('Cinto');
   document.getElementById('d-valor').value = d.valor || '';
   document.getElementById('d-sinal').value = d.sinal || '';
   document.getElementById('d-etapa').value = d.stage || 'primeira_visita';
@@ -1231,8 +1300,14 @@ function saveDeal() {
     tel: document.getElementById('d-tel').value,
     casamento: document.getElementById('d-casamento').value,
     tipo: document.getElementById('d-tipo').value,
+    colete: document.getElementById('d-colete').value,
     cor: document.getElementById('d-cor').value,
     tecido: document.getElementById('d-tecido').value,
+    fatocolecao: document.getElementById('d-fatocolecao').value,
+    forro: document.getElementById('d-forro').value,
+    botoespunho: document.getElementById('d-botoespunho').value,
+    baixogola: document.getElementById('d-baixogola').value,
+    acessorios: ['Gravata','Sapatos','Camisa','Meias','Cinto'].filter(a => document.getElementById('ac-'+a.toLowerCase()).checked),
     valor: parseFloat(document.getElementById('d-valor').value) || 0,
     sinal: parseFloat(document.getElementById('d-sinal').value) || 0,
     stage: document.getElementById('d-etapa').value,
