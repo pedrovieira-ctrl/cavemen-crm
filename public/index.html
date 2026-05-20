@@ -596,6 +596,65 @@
         <div class="form-group"><label>Largura 1/2 Cinta</label><input id="mc-largcinta" type="text" placeholder="cm"></div>
       </div>
 
+      <div class="form-subsection">🦺 Colete</div>
+      <div class="form-row">
+        <div class="form-group"><label>Modelo</label><input id="mco-modelo" type="text" placeholder="Nome do modelo..."></div>
+        <div class="form-group"><label>Tamanho</label>
+          <select id="mco-tamanho">
+            <option value="">— Selecionar —</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="2XL">2XL</option>
+            <option value="3XL">3XL</option>
+            <option value="4XL">4XL</option>
+            <option value="5XL">5XL</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>A — Largura do Ombro ao 1º Botão</label><input id="mco-a" type="text" placeholder="cm"></div>
+        <div class="form-group"><label>B — Comprimento Total</label><input id="mco-b" type="text" placeholder="cm"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>C — Comprimento das Costas</label><input id="mco-c" type="text" placeholder="cm"></div>
+      </div>
+
+      <div class="form-subsection">👖 Calça</div>
+      <div class="form-row">
+        <div class="form-group"><label>Modelo</label><input id="mca-modelo" type="text" placeholder="Nome do modelo..."></div>
+        <div class="form-group"><label>Tamanho</label>
+          <select id="mca-tamanho">
+            <option value="">— Selecionar —</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="2XL">2XL</option>
+            <option value="3XL">3XL</option>
+            <option value="4XL">4XL</option>
+            <option value="5XL">5XL</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>I — Largura da Cinta</label><input id="mca-i" type="text" placeholder="cm"></div>
+        <div class="form-group"><label>J — Largura da Anca</label><input id="mca-j" type="text" placeholder="cm"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>K — Largura da Coxa</label><input id="mca-k" type="text" placeholder="cm"></div>
+        <div class="form-group"><label>L — Largura do Joelho</label><input id="mca-l" type="text" placeholder="cm"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>M — Comprimento Total (sem cós)</label><input id="mca-m" type="text" placeholder="cm"></div>
+        <div class="form-group"><label>N — Comprimento Entre Pernas</label><input id="mca-n" type="text" placeholder="cm"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>O — Largura da Baínha</label><input id="mca-o" type="text" placeholder="cm"></div>
+        <div class="form-group"><label>Largura dos Gémeos</label><input id="mca-gemeos" type="text" placeholder="cm"></div>
+      </div>
+
       <div class="form-section">Notas</div>
       <div class="form-row full">
         <div class="form-group"><label>Observações</label><textarea id="d-notas" placeholder="Preferências, pedidos especiais, observações..."></textarea></div>
@@ -1224,6 +1283,34 @@ function openDetail(id) {
       `).join('')}
     </div>` : ''}
 
+    ${d.medidas?.colete && Object.values(d.medidas.colete).some(v=>v) ? `
+    <div class="detail-section">
+      <h4>🦺 Colete</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+        ${d.medidas.colete.modelo ? `<span class="tag tag-fato">${d.medidas.colete.modelo}</span>` : ''}
+        ${d.medidas.colete.tamanho ? `<span style="background:#dbeafe;color:#1e40af;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;">Tam. ${d.medidas.colete.tamanho}</span>` : ''}
+      </div>
+      ${[['a','A — Larg. Ombro ao 1º Botão'],['b','B — Comprimento Total'],['c','C — Comp. Costas']].filter(([k])=>d.medidas.colete[k]).map(([k,l])=>`
+        <div class="detail-field"><span class="df-label">${l}</span><span class="df-value">${d.medidas.colete[k]} cm</span></div>
+      `).join('')}
+    </div>` : ''}
+
+    ${d.medidas?.calca && Object.values(d.medidas.calca).some(v=>v) ? `
+    <div class="detail-section">
+      <h4>👖 Calça</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+        ${d.medidas.calca.modelo ? `<span class="tag tag-fato">${d.medidas.calca.modelo}</span>` : ''}
+        ${d.medidas.calca.tamanho ? `<span style="background:#dbeafe;color:#1e40af;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;">Tam. ${d.medidas.calca.tamanho}</span>` : ''}
+      </div>
+      ${[
+        ['i','I — Larg. Cinta'],['j','J — Larg. Anca'],['k','K — Larg. Coxa'],
+        ['l','L — Larg. Joelho'],['m','M — Comp. Total (sem cós)'],['n','N — Comp. Entre Pernas'],
+        ['o','O — Larg. Baínha'],['gemeos','Larg. Gémeos'],
+      ].filter(([k])=>d.medidas.calca[k]).map(([k,l])=>`
+        <div class="detail-field"><span class="df-label">${l}</span><span class="df-value">${d.medidas.calca[k]} cm</span></div>
+      `).join('')}
+    </div>` : ''}
+
     ${d.notas ? `<div class="detail-section"><h4>Notas</h4><p style="font-size:13px;color:var(--text-muted);line-height:1.6;">${d.notas}</p></div>` : ''}
 
     <div class="detail-section">
@@ -1281,6 +1368,10 @@ function openNewDealModal(stage = 'contacto') {
   document.getElementById('d-loja').value = activeLojaFilter || 'Guimarães';
   ['mc-modelo','mc-ombrobtn','mc-compmanga','mc-largombro','mc-largmeiaCosta','mc-compcostas','mc-largpeito','mc-largcinta'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('mc-tamanho').value = '';
+  ['mco-modelo','mco-a','mco-b','mco-c'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mco-tamanho').value = '';
+  ['mca-modelo','mca-i','mca-j','mca-k','mca-l','mca-m','mca-n','mca-o','mca-gemeos'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mca-tamanho').value = '';
   document.getElementById('d-etapa').value = stage;
   document.getElementById('d-casamento').value = '';
   document.getElementById('modal-deal').classList.add('open');
@@ -1326,6 +1417,23 @@ function editDeal(id) {
   document.getElementById('mc-compcostas').value = mc.compcostas || '';
   document.getElementById('mc-largpeito').value = mc.largpeito || '';
   document.getElementById('mc-largcinta').value = mc.largcinta || '';
+  const mco = m.colete || {};
+  document.getElementById('mco-modelo').value = mco.modelo || '';
+  document.getElementById('mco-tamanho').value = mco.tamanho || '';
+  document.getElementById('mco-a').value = mco.a || '';
+  document.getElementById('mco-b').value = mco.b || '';
+  document.getElementById('mco-c').value = mco.c || '';
+  const mca = m.calca || {};
+  document.getElementById('mca-modelo').value = mca.modelo || '';
+  document.getElementById('mca-tamanho').value = mca.tamanho || '';
+  document.getElementById('mca-i').value = mca.i || '';
+  document.getElementById('mca-j').value = mca.j || '';
+  document.getElementById('mca-k').value = mca.k || '';
+  document.getElementById('mca-l').value = mca.l || '';
+  document.getElementById('mca-m').value = mca.m || '';
+  document.getElementById('mca-n').value = mca.n || '';
+  document.getElementById('mca-o').value = mca.o || '';
+  document.getElementById('mca-gemeos').value = mca.gemeos || '';
   document.getElementById('modal-deal').classList.add('open');
 }
 
@@ -1363,6 +1471,25 @@ function saveDeal() {
         compcostas: document.getElementById('mc-compcostas').value,
         largpeito: document.getElementById('mc-largpeito').value,
         largcinta: document.getElementById('mc-largcinta').value,
+      },
+      colete: {
+        modelo: document.getElementById('mco-modelo').value,
+        tamanho: document.getElementById('mco-tamanho').value,
+        a: document.getElementById('mco-a').value,
+        b: document.getElementById('mco-b').value,
+        c: document.getElementById('mco-c').value,
+      },
+      calca: {
+        modelo: document.getElementById('mca-modelo').value,
+        tamanho: document.getElementById('mca-tamanho').value,
+        i: document.getElementById('mca-i').value,
+        j: document.getElementById('mca-j').value,
+        k: document.getElementById('mca-k').value,
+        l: document.getElementById('mca-l').value,
+        m: document.getElementById('mca-m').value,
+        n: document.getElementById('mca-n').value,
+        o: document.getElementById('mca-o').value,
+        gemeos: document.getElementById('mca-gemeos').value,
       },
     },
     criado: editingDealId ? (DB.deals.find(d=>d.id===editingDealId)?.criado || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
