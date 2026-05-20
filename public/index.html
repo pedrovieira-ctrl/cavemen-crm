@@ -788,8 +788,18 @@
             <option value="tarefa">✅ Tarefa</option>
           </select>
         </div>
-        <div class="form-group"><label>Cliente *</label>
-          <select id="a-deal" required></select>
+        <div class="form-group"><label>Loja *</label>
+          <select id="a-loja" required onchange="populateActivityClientSelect(this.value)">
+            <option value="">— Selecionar loja * —</option>
+            <option value="Guimarães">📍 Guimarães</option>
+            <option value="Braga">📍 Braga</option>
+            <option value="Porto">📍 Porto</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Cliente</label>
+          <select id="a-deal"></select>
         </div>
       </div>
       <div class="form-row full">
@@ -1333,8 +1343,11 @@ function renderClientes() {
 function renderAtividades() {
   let acts = DB.activities;
   if (activeLojaFilterAtiv) {
-    const dealIds = DB.deals.filter(d => d.loja === activeLojaFilterAtiv).map(d => d.id);
-    acts = acts.filter(a => dealIds.includes(a.dealId));
+    acts = acts.filter(a => {
+      // usa loja direta da atividade; fallback para loja do deal (compatibilidade com dados antigos)
+      const lojaAtiv = a.loja || DB.deals.find(d => d.id === a.dealId)?.loja;
+      return lojaAtiv === activeLojaFilterAtiv;
+    });
   }
   if (activityFilter === 'pendente') acts = acts.filter(a => !a.concluida);
   else if (activityFilter === 'concluida') acts = acts.filter(a => a.concluida);
@@ -1801,23 +1814,37 @@ function openNewActivityModal(dealId = null) {
   document.getElementById('a-notas').value = '';
   document.getElementById('a-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('a-hora').value = '';
-  const sel = document.getElementById('a-deal');
-  const sorted = [...DB.deals].sort((a,b) => a.nome.localeCompare(b.nome));
-  sel.innerHTML = '<option value="">— Selecionar cliente * —</option>' + sorted.map(d => `<option value="${d.id}">${d.nome}${d.loja ? ' · '+d.loja : ''}</option>`).join('');
-  if (dealId) sel.value = dealId;
+  // Pré-selecionar loja pelo filtro ativo ou pelo deal
+  const lojaSelect = document.getElementById('a-loja');
+  if (dealId) {
+    const deal = DB.deals.find(d => d.id === dealId);
+    lojaSelect.value = deal?.loja || activeLojaFilterAtiv || '';
+  } else {
+    lojaSelect.value = activeLojaFilterAtiv || '';
+  }
+  populateActivityClientSelect(lojaSelect.value, dealId);
   document.getElementById('modal-activity').classList.add('open');
+}
+
+function populateActivityClientSelect(loja, selectedDealId = null) {
+  const sel = document.getElementById('a-deal');
+  let deals = [...DB.deals].sort((a,b) => a.nome.localeCompare(b.nome));
+  if (loja) deals = deals.filter(d => d.loja === loja);
+  sel.innerHTML = '<option value="">— Selecionar cliente (opcional) —</option>' + deals.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+  if (selectedDealId) sel.value = selectedDealId;
 }
 
 function saveActivity() {
   const titulo = document.getElementById('a-titulo').value.trim();
   if (!titulo) { showToast('Título obrigatório!'); return; }
-  const dealId = document.getElementById('a-deal').value;
-  if (!dealId) { showToast('Tens de selecionar um cliente!'); return; }
+  const loja = document.getElementById('a-loja').value;
+  if (!loja) { showToast('Tens de selecionar uma loja!'); return; }
   const act = {
     id: editingActivityId || Date.now().toString(),
     tipo: document.getElementById('a-tipo').value,
     titulo,
     dealId: document.getElementById('a-deal').value,
+    loja,
     data: document.getElementById('a-data').value,
     hora: document.getElementById('a-hora').value,
     notas: document.getElementById('a-notas').value,
