@@ -692,8 +692,8 @@
             <option value="tarefa">✅ Tarefa</option>
           </select>
         </div>
-        <div class="form-group"><label>Associar a Negócio</label>
-          <select id="a-deal"></select>
+        <div class="form-group"><label>Cliente *</label>
+          <select id="a-deal" required></select>
         </div>
       </div>
       <div class="form-row full">
@@ -1523,7 +1523,8 @@ function openNewActivityModal(dealId = null) {
   document.getElementById('a-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('a-hora').value = '';
   const sel = document.getElementById('a-deal');
-  sel.innerHTML = '<option value="">— Sem negócio —</option>' + DB.deals.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+  const sorted = [...DB.deals].sort((a,b) => a.nome.localeCompare(b.nome));
+  sel.innerHTML = '<option value="">— Selecionar cliente * —</option>' + sorted.map(d => `<option value="${d.id}">${d.nome}${d.loja ? ' · '+d.loja : ''}</option>`).join('');
   if (dealId) sel.value = dealId;
   document.getElementById('modal-activity').classList.add('open');
 }
@@ -1531,6 +1532,8 @@ function openNewActivityModal(dealId = null) {
 function saveActivity() {
   const titulo = document.getElementById('a-titulo').value.trim();
   if (!titulo) { showToast('Título obrigatório!'); return; }
+  const dealId = document.getElementById('a-deal').value;
+  if (!dealId) { showToast('Tens de selecionar um cliente!'); return; }
   const act = {
     id: editingActivityId || Date.now().toString(),
     tipo: document.getElementById('a-tipo').value,
