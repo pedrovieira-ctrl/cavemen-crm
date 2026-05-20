@@ -246,6 +246,7 @@
   <div class="sidebar-section">
     <div class="sidebar-section-label">Principal</div>
     <div class="nav-item active" data-view="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-item" data-view="leads"><span class="nav-icon">🎯</span> Leads <span class="nav-badge" id="badge-leads">0</span></div>
     <div class="nav-item" data-view="pipeline"><span class="nav-icon">🔄</span> Pipeline</div>
     <div class="nav-item" data-view="negocios"><span class="nav-icon">💼</span> Negócios</div>
     <div class="nav-item" data-view="clientes"><span class="nav-icon">👥</span> Clientes</div>
@@ -296,6 +297,34 @@
           <div class="card-header"><h3>Atividades Pendentes</h3></div>
           <div class="card-body" id="dash-activities"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div id="view-leads" class="view">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="loja-filter-btn active" data-loja="" onclick="setLojaFilterLeads(this)">🏪 Todas as Lojas</button>
+          <button class="loja-filter-btn" data-loja="Guimarães" onclick="setLojaFilterLeads(this)">📍 Guimarães</button>
+          <button class="loja-filter-btn" data-loja="Braga" onclick="setLojaFilterLeads(this)">📍 Braga</button>
+          <button class="loja-filter-btn" data-loja="Porto" onclick="setLojaFilterLeads(this)">📍 Porto</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openNewLeadModal()">+ Nova Lead</button>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <div class="filter-chip active" data-estado="" onclick="filterLeads(this)">Todas</div>
+        <div class="filter-chip" data-estado="novo" onclick="filterLeads(this)">🆕 Novo</div>
+        <div class="filter-chip" data-estado="contactado" onclick="filterLeads(this)">📞 Contactado</div>
+        <div class="filter-chip" data-estado="qualificado" onclick="filterLeads(this)">✅ Qualificado</div>
+        <div class="filter-chip" data-estado="nao_qualificado" onclick="filterLeads(this)">❌ Não Qualificado</div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Nome</th><th>Contacto</th><th>Casamento</th><th>Loja</th><th>Origem</th><th>Estado</th><th>Data Lead</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="leads-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -457,6 +486,66 @@
           <button class="btn btn-danger btn-sm" style="margin-left:8px;" onclick="if(confirm('Apagar todos os dados?')){clearAllData();}">Limpar Tudo</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LEAD -->
+<div class="modal-overlay" id="modal-lead">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header">
+      <h2 id="modal-lead-title">Nova Lead</h2>
+      <button class="modal-close" onclick="closeModal('modal-lead')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Nome *</label><input id="l-nome" type="text" placeholder="Nome do noivo..."></div>
+        <div class="form-group"><label>Telefone *</label><input id="l-tel" type="tel" placeholder="+351 9XX XXX XXX"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input id="l-email" type="email" placeholder="email@exemplo.com"></div>
+        <div class="form-group"><label>Data do Casamento</label><input id="l-casamento" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Loja *</label>
+          <select id="l-loja">
+            <option value="Guimarães">📍 Guimarães</option>
+            <option value="Braga">📍 Braga</option>
+            <option value="Porto">📍 Porto</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Origem</label>
+          <select id="l-origem">
+            <option value="Recomendação">Recomendação</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="Google">Google</option>
+            <option value="Website">Website</option>
+            <option value="Walk-in">Walk-in</option>
+            <option value="Feira">Feira de Casamentos</option>
+            <option value="casamentos.pt">casamentos.pt</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Estado</label>
+          <select id="l-estado">
+            <option value="novo">🆕 Novo</option>
+            <option value="contactado">📞 Contactado</option>
+            <option value="qualificado">✅ Qualificado</option>
+            <option value="nao_qualificado">❌ Não Qualificado</option>
+          </select>
+        </div>
+        <div class="form-group"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Notas</label><textarea id="l-notas" placeholder="Observações, preferências..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-lead')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveLead()">💾 Guardar Lead</button>
     </div>
   </div>
 </div>
@@ -740,10 +829,13 @@ const STAGES = [
   { id: 'entrega',         label: 'Entrega',             color: '#059669', bg: '#d1fae5' },
 ];
 
-let DB = { deals: [], activities: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } };
+let DB = { deals: [], activities: [], leads: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } };
 let editingDealId = null;
 let editingActivityId = null;
+let editingLeadId = null;
 let activeLojaFilter = '';
+let activeLojaFilterLeads = '';
+let leadsEstadoFilter = '';
 let calCurrentDate = new Date();
 let activityFilter = 'pendente';
 let activeLojaFilterAtiv = '';
@@ -794,11 +886,17 @@ function loadSampleData() {
     { id: 'a5', tipo: 'tarefa', titulo: 'Encomendar botões personalizados Tiago', dealId: '6', data: future(3), hora: '', notas: 'Iniciais TR gravadas', concluida: false, criado: future(-4) },
     { id: 'a6', tipo: 'chamada', titulo: 'Follow-up Gonçalo Silva', dealId: '8', data: future(7), hora: '16:00', notas: 'Apresentar opções de fato casual praia', concluida: false, criado: future(-2) },
   ];
+  DB.leads = [
+    { id: 'l1', nome: 'Filipe Marques', tel: '920 111 222', email: 'filipe.m@gmail.com', casamento: future(180), loja: 'Guimarães', origem: 'Instagram', estado: 'novo', notas: 'Viu o perfil no Instagram, interesse em fato slim', criado: future(-1), atualizado: future(-1) },
+    { id: 'l2', nome: 'Rui Tavares', tel: '921 222 333', email: '', casamento: future(240), loja: 'Braga', origem: 'Recomendação', estado: 'contactado', notas: 'Recomendado pelo irmão, casamento em Braga', criado: future(-3), atualizado: future(-2) },
+    { id: 'l3', nome: 'Sérgio Pinto', tel: '922 333 444', email: 'sergio.p@hotmail.com', casamento: future(90), loja: 'Porto', origem: 'casamentos.pt', estado: 'qualificado', notas: 'Quer fato smoking, orçamento até 2000€', criado: future(-5), atualizado: future(-1) },
+    { id: 'l4', nome: 'Diogo Ferreira', tel: '923 444 555', email: '', casamento: '', loja: 'Guimarães', origem: 'Facebook', estado: 'nao_qualificado', notas: 'Sem data de casamento definida, talvez o ano que vem', criado: future(-7), atualizado: future(-6) },
+  ];
   saveDB();
   renderAll();
 }
 
-function clearAllData() { DB = { deals: [], activities: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } }; saveDB(); renderAll(); showToast('Dados limpos.'); }
+function clearAllData() { DB = { deals: [], activities: [], leads: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } }; saveDB(); renderAll(); showToast('Dados limpos.'); }
 
 // ===================== RENDER =====================
 function renderAll() {
@@ -809,6 +907,7 @@ function renderAll() {
 
 function renderView(view) {
   if (view === 'dashboard') renderDashboard();
+  else if (view === 'leads') renderLeads();
   else if (view === 'pipeline') renderPipeline();
   else if (view === 'negocios') renderNegocios();
   else if (view === 'clientes') renderClientes();
@@ -820,6 +919,157 @@ function renderView(view) {
 function updateBadge() {
   const pending = DB.activities.filter(a => !a.concluida).length;
   document.getElementById('badge-ativ').textContent = pending;
+  const newLeads = (DB.leads || []).filter(l => l.estado === 'novo' || l.estado === 'contactado').length;
+  document.getElementById('badge-leads').textContent = newLeads || '';
+}
+
+// ===================== LEADS =====================
+const LEAD_ESTADOS = {
+  novo:           { label: '🆕 Novo',            color: '#6b7280', bg: '#f3f4f6' },
+  contactado:     { label: '📞 Contactado',       color: '#3b82f6', bg: '#eff6ff' },
+  qualificado:    { label: '✅ Qualificado',       color: '#059669', bg: '#d1fae5' },
+  nao_qualificado:{ label: '❌ Não Qualificado',  color: '#dc2626', bg: '#fee2e2' },
+};
+
+function setLojaFilterLeads(btn) {
+  document.querySelectorAll('#view-leads .loja-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeLojaFilterLeads = btn.dataset.loja;
+  renderLeads();
+}
+
+function filterLeads(el) {
+  document.querySelectorAll('#view-leads .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  leadsEstadoFilter = el.dataset.estado;
+  renderLeads();
+}
+
+function renderLeads() {
+  if (!DB.leads) DB.leads = [];
+  let leads = [...DB.leads];
+  if (activeLojaFilterLeads) leads = leads.filter(l => l.loja === activeLojaFilterLeads);
+  if (leadsEstadoFilter) leads = leads.filter(l => l.estado === leadsEstadoFilter);
+  leads = leads.sort((a, b) => (a.criado||'') < (b.criado||'') ? 1 : -1);
+
+  document.getElementById('leads-tbody').innerHTML = leads.length ? leads.map(l => {
+    const est = LEAD_ESTADOS[l.estado] || LEAD_ESTADOS.novo;
+    const daysUntil = l.casamento ? Math.ceil((new Date(l.casamento) - new Date()) / 86400000) : null;
+    const lojaClass = l.loja === 'Guimarães' ? 'loja-guimaraes' : l.loja === 'Braga' ? 'loja-braga' : l.loja === 'Porto' ? 'loja-porto' : '';
+    return `<tr>
+      <td><div class="client-name-cell">
+        <div class="avatar" style="background:${est.color};">${l.nome[0]}</div>
+        <div class="client-info"><div class="name">${l.nome}</div><div class="sub">${l.notas ? l.notas.slice(0,40)+'...' : ''}</div></div>
+      </div></td>
+      <td>${l.tel ? `<a href="tel:${l.tel}" style="color:var(--accent);">${l.tel}</a>` : '-'}${l.email ? `<br><span style="font-size:11px;color:var(--text-muted);">${l.email}</span>` : ''}</td>
+      <td>${l.casamento ? `<div style="font-weight:600;">${formatDate(l.casamento)}</div><div class="${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}" style="font-size:11px;">${daysUntil}d</div>` : '-'}</td>
+      <td>${l.loja ? `<span class="loja-tag ${lojaClass}">${l.loja}</span>` : '-'}</td>
+      <td><span style="font-size:12px;">${l.origem||'-'}</span></td>
+      <td><span class="stage-badge" style="background:${est.bg};color:${est.color};">${est.label}</span></td>
+      <td style="font-size:12px;color:var(--text-muted);">${formatDate(l.criado)}</td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <select onchange="changeLeadEstado('${l.id}', this.value)" style="border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:11px;background:var(--card);cursor:pointer;">
+            <option value="">Estado...</option>
+            <option value="novo">🆕 Novo</option>
+            <option value="contactado">📞 Contactado</option>
+            <option value="qualificado">✅ Qualificado</option>
+            <option value="nao_qualificado">❌ Não Qualificado</option>
+          </select>
+          <button class="btn btn-sm" style="background:#d1fae5;color:#065f46;font-size:11px;" onclick="convertLeadToNegocio('${l.id}')">→ Negócio</button>
+          <button class="btn btn-outline btn-sm" onclick="editLead('${l.id}')">✏️</button>
+          <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;" onclick="deleteLead('${l.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🎯</div><p>Sem leads. Clica em "+ Nova Lead" para começar.</p></div></td></tr>`;
+}
+
+function openNewLeadModal() {
+  editingLeadId = null;
+  document.getElementById('modal-lead-title').textContent = 'Nova Lead';
+  ['l-nome','l-tel','l-email','l-notas'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('l-casamento').value = '';
+  document.getElementById('l-loja').value = activeLojaFilterLeads || 'Guimarães';
+  document.getElementById('l-origem').value = 'Recomendação';
+  document.getElementById('l-estado').value = 'novo';
+  document.getElementById('modal-lead').classList.add('open');
+}
+
+function editLead(id) {
+  const l = DB.leads.find(x => x.id === id);
+  if (!l) return;
+  editingLeadId = id;
+  document.getElementById('modal-lead-title').textContent = 'Editar Lead';
+  document.getElementById('l-nome').value = l.nome || '';
+  document.getElementById('l-tel').value = l.tel || '';
+  document.getElementById('l-email').value = l.email || '';
+  document.getElementById('l-casamento').value = l.casamento || '';
+  document.getElementById('l-loja').value = l.loja || 'Guimarães';
+  document.getElementById('l-origem').value = l.origem || 'Recomendação';
+  document.getElementById('l-estado').value = l.estado || 'novo';
+  document.getElementById('l-notas').value = l.notas || '';
+  document.getElementById('modal-lead').classList.add('open');
+}
+
+function saveLead() {
+  const nome = document.getElementById('l-nome').value.trim();
+  if (!nome) { showToast('Nome obrigatório!'); return; }
+  const tel = document.getElementById('l-tel').value.trim();
+  if (!tel) { showToast('Telefone obrigatório!'); return; }
+  if (!DB.leads) DB.leads = [];
+  const lead = {
+    id: editingLeadId || Date.now().toString(),
+    nome, tel,
+    email: document.getElementById('l-email').value,
+    casamento: document.getElementById('l-casamento').value,
+    loja: document.getElementById('l-loja').value,
+    origem: document.getElementById('l-origem').value,
+    estado: document.getElementById('l-estado').value,
+    notas: document.getElementById('l-notas').value,
+    criado: editingLeadId ? (DB.leads.find(l=>l.id===editingLeadId)?.criado || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
+    atualizado: new Date().toISOString().split('T')[0],
+  };
+  if (editingLeadId) {
+    const idx = DB.leads.findIndex(l => l.id === editingLeadId);
+    if (idx > -1) DB.leads[idx] = lead;
+  } else {
+    DB.leads.push(lead);
+  }
+  saveDB();
+  closeModal('modal-lead');
+  renderAll();
+  showToast(`Lead ${editingLeadId ? 'atualizada' : 'criada'}: ${nome}`);
+}
+
+function deleteLead(id) {
+  if (!confirm('Eliminar esta lead?')) return;
+  DB.leads = DB.leads.filter(l => l.id !== id);
+  saveDB(); renderAll();
+  showToast('Lead eliminada.');
+}
+
+function changeLeadEstado(id, estado) {
+  if (!estado) return;
+  const lead = DB.leads.find(l => l.id === id);
+  if (lead) { lead.estado = estado; saveDB(); renderLeads(); updateBadge(); showToast(`Estado atualizado: ${LEAD_ESTADOS[estado]?.label}`); }
+}
+
+function convertLeadToNegocio(id) {
+  const l = DB.leads.find(x => x.id === id);
+  if (!l) return;
+  // Pré-preenche o modal de negócio com os dados da lead
+  openNewDealModal('primeira_visita');
+  document.getElementById('d-nome').value = l.nome || '';
+  document.getElementById('d-tel').value = l.tel || '';
+  document.getElementById('d-email').value = l.email || '';
+  document.getElementById('d-casamento').value = l.casamento || '';
+  document.getElementById('d-loja').value = l.loja || 'Guimarães';
+  document.getElementById('d-origem').value = l.origem || 'Recomendação';
+  document.getElementById('d-notas').value = l.notas || '';
+  // Guarda o id da lead para remover após converter
+  document.getElementById('modal-deal').dataset.fromLead = id;
+  showToast('Preenche os detalhes do fato e guarda!');
 }
 
 // ===================== DASHBOARD =====================
@@ -1523,7 +1773,15 @@ function saveDeal() {
   saveDB();
   closeModal('modal-deal');
   renderAll();
-  showToast(`${editingDealId ? 'Negócio atualizado' : 'Novo negócio criado'}: ${nome}`);
+  // Se convertido de lead, remove a lead
+  const fromLead = document.getElementById('modal-deal').dataset.fromLead;
+  if (fromLead && !editingDealId) {
+    DB.leads = (DB.leads || []).filter(l => l.id !== fromLead);
+    delete document.getElementById('modal-deal').dataset.fromLead;
+    showToast(`Lead convertida em negócio: ${nome} ✅`);
+  } else {
+    showToast(`${editingDealId ? 'Negócio atualizado' : 'Novo negócio criado'}: ${nome}`);
+  }
 }
 
 function deleteDeal(id) {
