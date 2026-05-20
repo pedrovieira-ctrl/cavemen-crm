@@ -1349,12 +1349,14 @@ function renderAtividades() {
 
   document.getElementById('activities-list').innerHTML = acts.length ? acts.map(a => {
     const deal = DB.deals.find(d => d.id === a.dealId);
+    const lojaClass = deal?.loja === 'Guimarães' ? 'loja-guimaraes' : deal?.loja === 'Braga' ? 'loja-braga' : deal?.loja === 'Porto' ? 'loja-porto' : '';
+    const lojaTag = deal?.loja ? `<span class="loja-tag ${lojaClass}" style="margin-left:6px;">${deal.loja}</span>` : '';
     return `<div class="activity-item ${a.concluida ? 'activity-done' : ''}">
       <div class="checkbox ${a.concluida ? 'checked' : ''}" onclick="toggleActivity('${a.id}')">${a.concluida ? '✓' : ''}</div>
       <div class="activity-icon" style="background:${colors[a.tipo]||'#f3f4f6'};">${icons[a.tipo]||'📋'}</div>
       <div class="activity-body">
         <div class="act-title">${a.titulo}</div>
-        <div class="act-sub">${deal ? `👤 ${deal.nome}` : ''}${a.hora ? ` · 🕐 ${a.hora}` : ''}</div>
+        <div class="act-sub" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${deal ? `👤 ${deal.nome}` : ''}${lojaTag}${a.hora ? ` · 🕐 ${a.hora}` : ''}</div>
         <div class="act-time">📅 ${formatDate(a.data)}${a.notas ? ` · ${a.notas}` : ''}</div>
       </div>
       <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626; flex-shrink:0;" onclick="deleteActivity('${a.id}')">🗑</button>
