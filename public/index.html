@@ -370,12 +370,20 @@
 
     <!-- ATIVIDADES -->
     <div id="view-atividades" class="view">
-      <div style="display:flex; gap:16px; margin-bottom:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="loja-filter-btn active" data-loja="" onclick="setLojaFilterAtiv(this)">🏪 Todas as Lojas</button>
+          <button class="loja-filter-btn" data-loja="Guimarães" onclick="setLojaFilterAtiv(this)">📍 Guimarães</button>
+          <button class="loja-filter-btn" data-loja="Braga" onclick="setLojaFilterAtiv(this)">📍 Braga</button>
+          <button class="loja-filter-btn" data-loja="Porto" onclick="setLojaFilterAtiv(this)">📍 Porto</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openNewActivityModal()">+ Nova Atividade</button>
+      </div>
+      <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
         <div class="filter-chip active" data-filter="pendente" onclick="filterActivities(this)">Pendentes</div>
         <div class="filter-chip" data-filter="todas" onclick="filterActivities(this)">Todas</div>
         <div class="filter-chip" data-filter="hoje" onclick="filterActivities(this)">Hoje</div>
         <div class="filter-chip" data-filter="concluida" onclick="filterActivities(this)">Concluídas</div>
-        <div style="margin-left:auto;"><button class="btn btn-primary btn-sm" onclick="openNewActivityModal()">+ Nova Atividade</button></div>
       </div>
       <div class="card">
         <div class="card-body" style="padding:0;">
@@ -739,6 +747,7 @@ let editingActivityId = null;
 let activeLojaFilter = '';
 let calCurrentDate = new Date();
 let activityFilter = 'pendente';
+let activeLojaFilterAtiv = '';
 let chartRevenue = null, chartPipeline = null, chartTipos = null, chartConversion = null, chartOrigem = null;
 
 async function loadDB() {
@@ -1074,6 +1083,10 @@ function renderClientes() {
 // ===================== ATIVIDADES =====================
 function renderAtividades() {
   let acts = DB.activities;
+  if (activeLojaFilterAtiv) {
+    const dealIds = DB.deals.filter(d => d.loja === activeLojaFilterAtiv).map(d => d.id);
+    acts = acts.filter(a => dealIds.includes(a.dealId));
+  }
   if (activityFilter === 'pendente') acts = acts.filter(a => !a.concluida);
   else if (activityFilter === 'concluida') acts = acts.filter(a => a.concluida);
   else if (activityFilter === 'hoje') {
@@ -1098,6 +1111,13 @@ function renderAtividades() {
       <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626; flex-shrink:0;" onclick="deleteActivity('${a.id}')">🗑</button>
     </div>`;
   }).join('') : `<div class="empty-state"><div class="empty-icon">✅</div><p>Sem atividades neste filtro</p></div>`;
+}
+
+function setLojaFilterAtiv(btn) {
+  document.querySelectorAll('#view-atividades .loja-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeLojaFilterAtiv = btn.dataset.loja;
+  renderAtividades();
 }
 
 function filterActivities(el) {
