@@ -1828,9 +1828,8 @@ function openNewActivityModal(dealId = null) {
 
 function populateActivityClientSelect(loja, selectedDealId = null) {
   const sel = document.getElementById('a-deal');
-  let deals = [...DB.deals].sort((a,b) => a.nome.localeCompare(b.nome));
-  if (loja) deals = deals.filter(d => d.loja === loja);
-  sel.innerHTML = '<option value="">— Selecionar cliente (opcional) —</option>' + deals.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+  const deals = [...DB.deals].sort((a,b) => a.nome.localeCompare(b.nome));
+  sel.innerHTML = '<option value="">— Selecionar cliente (opcional) —</option>' + deals.map(d => `<option value="${d.id}">${d.nome}${d.loja ? ' · ' + d.loja : ''}</option>`).join('');
   if (selectedDealId) sel.value = selectedDealId;
 }
 
