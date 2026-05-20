@@ -563,17 +563,6 @@
       </div>
 
       <div class="form-section">Medidas (cm)</div>
-      <div class="form-row three">
-        <div class="form-group"><label>Peito</label><input id="m-peito" type="number" placeholder="cm"></div>
-        <div class="form-group"><label>Cintura</label><input id="m-cintura" type="number" placeholder="cm"></div>
-        <div class="form-group"><label>Anca</label><input id="m-anca" type="number" placeholder="cm"></div>
-      </div>
-      <div class="form-row three">
-        <div class="form-group"><label>Manga</label><input id="m-manga" type="number" placeholder="cm"></div>
-        <div class="form-group"><label>Entrepernas</label><input id="m-entrep" type="number" placeholder="cm"></div>
-        <div class="form-group"><label>Altura</label><input id="m-altura" type="number" placeholder="cm"></div>
-      </div>
-
       <div class="form-subsection">🧥 Casaco</div>
       <div class="form-row">
         <div class="form-group"><label>Modelo</label><input id="mc-modelo" type="text" placeholder="Nome do modelo..."></div>
@@ -1215,15 +1204,6 @@ function openDetail(id) {
       <div class="detail-field"><span class="df-label">Origem</span><span class="df-value">${d.origem||'-'}</span></div>
     </div>
 
-    ${d.medidas && Object.keys(d.medidas).filter(k=>k!=='casaco').some(k=>d.medidas[k]) ? `
-    <div class="detail-section">
-      <h4>Medidas</h4>
-      <div class="medidas-grid">
-        ${[['peito','Peito'],['cintura','Cintura'],['anca','Anca'],['manga','Manga'],['entrep','Entrepernas'],['altura','Altura']].map(([k,l]) =>
-          d.medidas[k] ? `<div class="medida-item"><div class="m-label">${l}</div><div class="m-value">${d.medidas[k]}</div><div class="m-unit">cm</div></div>` : ''
-        ).join('')}
-      </div>
-    </div>` : ''}
     ${d.medidas?.casaco && Object.values(d.medidas.casaco).some(v=>v) ? `
     <div class="detail-section">
       <h4>🧥 Casaco</h4>
@@ -1299,7 +1279,6 @@ function openNewDealModal(stage = 'contacto') {
   ['d-tipo','d-colete'].forEach(id => document.getElementById(id).value = '');
   ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
   document.getElementById('d-loja').value = activeLojaFilter || 'Guimarães';
-  ['m-peito','m-cintura','m-anca','m-manga','m-entrep','m-altura'].forEach(id => document.getElementById(id).value = '');
   ['mc-modelo','mc-ombrobtn','mc-compmanga','mc-largombro','mc-largmeiaCosta','mc-compcostas','mc-largpeito','mc-largcinta'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('mc-tamanho').value = '';
   document.getElementById('d-etapa').value = stage;
@@ -1337,12 +1316,6 @@ function editDeal(id) {
   document.getElementById('d-origem').value = d.origem || 'Recomendação';
   document.getElementById('d-notas').value = d.notas || '';
   const m = d.medidas || {};
-  document.getElementById('m-peito').value = m.peito || '';
-  document.getElementById('m-cintura').value = m.cintura || '';
-  document.getElementById('m-anca').value = m.anca || '';
-  document.getElementById('m-manga').value = m.manga || '';
-  document.getElementById('m-entrep').value = m.entrep || '';
-  document.getElementById('m-altura').value = m.altura || '';
   const mc = m.casaco || {};
   document.getElementById('mc-modelo').value = mc.modelo || '';
   document.getElementById('mc-tamanho').value = mc.tamanho || '';
@@ -1380,12 +1353,6 @@ function saveDeal() {
     origem: document.getElementById('d-origem').value,
     notas: document.getElementById('d-notas').value,
     medidas: {
-      peito: parseFloat(document.getElementById('m-peito').value) || null,
-      cintura: parseFloat(document.getElementById('m-cintura').value) || null,
-      anca: parseFloat(document.getElementById('m-anca').value) || null,
-      manga: parseFloat(document.getElementById('m-manga').value) || null,
-      entrep: parseFloat(document.getElementById('m-entrep').value) || null,
-      altura: parseFloat(document.getElementById('m-altura').value) || null,
       casaco: {
         modelo: document.getElementById('mc-modelo').value,
         tamanho: document.getElementById('mc-tamanho').value,
