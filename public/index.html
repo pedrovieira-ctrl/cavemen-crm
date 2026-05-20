@@ -156,6 +156,7 @@
   .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); background: #fff; }
   .form-group textarea { resize: vertical; min-height: 80px; }
   .form-section { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .form-subsection { font-size: 13px; font-weight: 700; color: var(--text); margin: 16px 0 10px; padding: 8px 12px; background: #f1f3f9; border-radius: 8px; border-left: 3px solid var(--accent); }
 
   /* DETAIL PANEL */
   .detail-panel { position: fixed; right: 0; top: 0; width: 420px; height: 100vh; background: var(--card); border-left: 1px solid var(--border); z-index: 200; transform: translateX(100%); transition: transform 0.25s; overflow-y: auto; }
@@ -571,6 +572,39 @@
         <div class="form-group"><label>Manga</label><input id="m-manga" type="number" placeholder="cm"></div>
         <div class="form-group"><label>Entrepernas</label><input id="m-entrep" type="number" placeholder="cm"></div>
         <div class="form-group"><label>Altura</label><input id="m-altura" type="number" placeholder="cm"></div>
+      </div>
+
+      <div class="form-subsection">🧥 Casaco</div>
+      <div class="form-row">
+        <div class="form-group"><label>Modelo</label><input id="mc-modelo" type="text" placeholder="Nome do modelo..."></div>
+        <div class="form-group"><label>Tamanho</label>
+          <select id="mc-tamanho">
+            <option value="">— Selecionar —</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="2XL">2XL</option>
+            <option value="3XL">3XL</option>
+            <option value="4XL">4XL</option>
+            <option value="5XL">5XL</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Dist. Ombro ao 1º Botão</label><input id="mc-ombrobtn" type="text" placeholder="cm"></div>
+        <div class="form-group"><label>Comprimento da Manga</label><input id="mc-compmanga" type="text" placeholder="cm"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Largura do Ombro</label><input id="mc-largombro" type="text" placeholder="cm"></div>
+        <div class="form-group"><label>Largura da Meia-Costa</label><input id="mc-largmeiaCosta" type="text" placeholder="cm"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Comprimento das Costas (excl. gola)</label><input id="mc-compcostas" type="text" placeholder="cm"></div>
+        <div class="form-group"><label>Largura 1/2 Peito</label><input id="mc-largpeito" type="text" placeholder="cm"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Largura 1/2 Cinta</label><input id="mc-largcinta" type="text" placeholder="cm"></div>
       </div>
 
       <div class="form-section">Notas</div>
@@ -1181,7 +1215,7 @@ function openDetail(id) {
       <div class="detail-field"><span class="df-label">Origem</span><span class="df-value">${d.origem||'-'}</span></div>
     </div>
 
-    ${d.medidas && Object.keys(d.medidas).length > 0 ? `
+    ${d.medidas && Object.keys(d.medidas).filter(k=>k!=='casaco').some(k=>d.medidas[k]) ? `
     <div class="detail-section">
       <h4>Medidas</h4>
       <div class="medidas-grid">
@@ -1189,6 +1223,25 @@ function openDetail(id) {
           d.medidas[k] ? `<div class="medida-item"><div class="m-label">${l}</div><div class="m-value">${d.medidas[k]}</div><div class="m-unit">cm</div></div>` : ''
         ).join('')}
       </div>
+    </div>` : ''}
+    ${d.medidas?.casaco && Object.values(d.medidas.casaco).some(v=>v) ? `
+    <div class="detail-section">
+      <h4>🧥 Casaco</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+        ${d.medidas.casaco.modelo ? `<span class="tag tag-fato">${d.medidas.casaco.modelo}</span>` : ''}
+        ${d.medidas.casaco.tamanho ? `<span style="background:#dbeafe;color:#1e40af;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;">Tam. ${d.medidas.casaco.tamanho}</span>` : ''}
+      </div>
+      ${[
+        ['ombrobtn','Dist. Ombro → 1º Botão'],
+        ['compmanga','Comp. Manga'],
+        ['largombro','Larg. Ombro'],
+        ['largmeiaCosta','Larg. Meia-Costa'],
+        ['compcostas','Comp. Costas (excl. gola)'],
+        ['largpeito','Larg. 1/2 Peito'],
+        ['largcinta','Larg. 1/2 Cinta'],
+      ].filter(([k])=>d.medidas.casaco[k]).map(([k,l])=>`
+        <div class="detail-field"><span class="df-label">${l}</span><span class="df-value">${d.medidas.casaco[k]} cm</span></div>
+      `).join('')}
     </div>` : ''}
 
     ${d.notas ? `<div class="detail-section"><h4>Notas</h4><p style="font-size:13px;color:var(--text-muted);line-height:1.6;">${d.notas}</p></div>` : ''}
@@ -1247,6 +1300,8 @@ function openNewDealModal(stage = 'contacto') {
   ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
   document.getElementById('d-loja').value = activeLojaFilter || 'Guimarães';
   ['m-peito','m-cintura','m-anca','m-manga','m-entrep','m-altura'].forEach(id => document.getElementById(id).value = '');
+  ['mc-modelo','mc-ombrobtn','mc-compmanga','mc-largombro','mc-largmeiaCosta','mc-compcostas','mc-largpeito','mc-largcinta'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mc-tamanho').value = '';
   document.getElementById('d-etapa').value = stage;
   document.getElementById('d-casamento').value = '';
   document.getElementById('modal-deal').classList.add('open');
@@ -1288,6 +1343,16 @@ function editDeal(id) {
   document.getElementById('m-manga').value = m.manga || '';
   document.getElementById('m-entrep').value = m.entrep || '';
   document.getElementById('m-altura').value = m.altura || '';
+  const mc = m.casaco || {};
+  document.getElementById('mc-modelo').value = mc.modelo || '';
+  document.getElementById('mc-tamanho').value = mc.tamanho || '';
+  document.getElementById('mc-ombrobtn').value = mc.ombrobtn || '';
+  document.getElementById('mc-compmanga').value = mc.compmanga || '';
+  document.getElementById('mc-largombro').value = mc.largombro || '';
+  document.getElementById('mc-largmeiaCosta').value = mc.largmeiaCosta || '';
+  document.getElementById('mc-compcostas').value = mc.compcostas || '';
+  document.getElementById('mc-largpeito').value = mc.largpeito || '';
+  document.getElementById('mc-largcinta').value = mc.largcinta || '';
   document.getElementById('modal-deal').classList.add('open');
 }
 
@@ -1321,6 +1386,17 @@ function saveDeal() {
       manga: parseFloat(document.getElementById('m-manga').value) || null,
       entrep: parseFloat(document.getElementById('m-entrep').value) || null,
       altura: parseFloat(document.getElementById('m-altura').value) || null,
+      casaco: {
+        modelo: document.getElementById('mc-modelo').value,
+        tamanho: document.getElementById('mc-tamanho').value,
+        ombrobtn: document.getElementById('mc-ombrobtn').value,
+        compmanga: document.getElementById('mc-compmanga').value,
+        largombro: document.getElementById('mc-largombro').value,
+        largmeiaCosta: document.getElementById('mc-largmeiaCosta').value,
+        compcostas: document.getElementById('mc-compcostas').value,
+        largpeito: document.getElementById('mc-largpeito').value,
+        largcinta: document.getElementById('mc-largcinta').value,
+      },
     },
     criado: editingDealId ? (DB.deals.find(d=>d.id===editingDealId)?.criado || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     atualizado: new Date().toISOString().split('T')[0],
