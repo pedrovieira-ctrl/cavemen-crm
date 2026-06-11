@@ -423,6 +423,12 @@
 
     <!-- CALENDÁRIO -->
     <div id="view-calendario" class="view">
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+        <button class="loja-filter-btn active" data-loja="" onclick="setLojaFilterCal(this)">🏪 Todas as Lojas</button>
+        <button class="loja-filter-btn" data-loja="Guimarães" onclick="setLojaFilterCal(this)">📍 Guimarães</button>
+        <button class="loja-filter-btn" data-loja="Braga" onclick="setLojaFilterCal(this)">📍 Braga</button>
+        <button class="loja-filter-btn" data-loja="Porto" onclick="setLojaFilterCal(this)">📍 Porto</button>
+      </div>
       <div class="card">
         <div class="card-header">
           <h3 id="cal-month-title"></h3>
@@ -849,6 +855,7 @@ let leadsEstadoFilter = '';
 let calCurrentDate = new Date();
 let activityFilter = 'pendente';
 let activeLojaFilterAtiv = '';
+let activeLojaFilterCal = '';
 let chartRevenue = null, chartPipeline = null, chartTipos = null, chartConversion = null, chartOrigem = null;
 
 async function loadDB() {
@@ -1401,8 +1408,15 @@ function renderCalendar() {
 
   document.getElementById('cal-month-title').textContent = new Date(year, month).toLocaleDateString('pt', { month: 'long', year: 'numeric' });
 
-  const weddings = DB.deals.filter(d => { const dc = new Date(d.casamento); return dc.getFullYear() === year && dc.getMonth() === month; });
-  const activities = DB.activities.filter(a => { const da = new Date(a.data); return da.getFullYear() === year && da.getMonth() === month; });
+  let weddings = DB.deals.filter(d => { const dc = new Date(d.casamento); return dc.getFullYear() === year && dc.getMonth() === month; });
+  let activities = DB.activities.filter(a => { const da = new Date(a.data); return da.getFullYear() === year && da.getMonth() === month; });
+  if (activeLojaFilterCal) {
+    weddings = weddings.filter(d => d.loja === activeLojaFilterCal);
+    activities = activities.filter(a => {
+      const lojaAtiv = a.loja || DB.deals.find(d => d.id === a.dealId)?.loja;
+      return lojaAtiv === activeLojaFilterCal;
+    });
+  }
 
   let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
   ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d => html += `<div style="text-align:center;padding:8px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">${d}</div>`);
@@ -1436,6 +1450,12 @@ function renderCalendar() {
 }
 function calPrev() { calCurrentDate.setMonth(calCurrentDate.getMonth()-1); renderCalendar(); }
 function calNext() { calCurrentDate.setMonth(calCurrentDate.getMonth()+1); renderCalendar(); }
+function setLojaFilterCal(btn) {
+  document.querySelectorAll('#view-calendario .loja-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeLojaFilterCal = btn.dataset.loja;
+  renderCalendar();
+}
 
 // ===================== RELATÓRIOS =====================
 function renderRelatorios() {
