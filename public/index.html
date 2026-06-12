@@ -611,6 +611,7 @@
       <div class="form-row">
         <div class="form-group"><label>Loja *</label>
           <select id="d-loja">
+            <option value="">— Selecionar loja * —</option>
             <option value="Guimarães">📍 Guimarães</option>
             <option value="Braga">📍 Braga</option>
             <option value="Porto">📍 Porto</option>
@@ -1099,7 +1100,7 @@ function convertLeadToNegocio(id) {
   document.getElementById('d-tel').value = l.tel || '';
   document.getElementById('d-email').value = l.email || '';
   document.getElementById('d-casamento').value = l.casamento || '';
-  document.getElementById('d-loja').value = l.loja || 'Guimarães';
+  document.getElementById('d-loja').value = l.loja || '';
   document.getElementById('d-origem').value = l.origem || 'Recomendação';
   document.getElementById('d-notas').value = l.notas || '';
   // Guarda o id da lead para remover após converter
@@ -1703,7 +1704,7 @@ function openNewDealModal(stage = 'contacto') {
   ['d-valor','d-sinal'].forEach(id => document.getElementById(id).value = '');
   ['d-tipo','d-colete','d-prioridade'].forEach(id => document.getElementById(id).value = '');
   ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
-  document.getElementById('d-loja').value = activeLojaFilter || 'Guimarães';
+  document.getElementById('d-loja').value = activeLojaFilter || '';
   ['mc-modelo','mc-ombrobtn','mc-compmanga','mc-largombro','mc-largmeiaCosta','mc-compcostas','mc-largpeito','mc-largcinta'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('mc-tamanho').value = '';
   ['mco-modelo','mco-a','mco-b','mco-c'].forEach(id => document.getElementById(id).value = '');
@@ -1741,7 +1742,7 @@ function editDeal(id) {
   document.getElementById('d-valor').value = d.valor || '';
   document.getElementById('d-sinal').value = d.sinal || '';
   document.getElementById('d-etapa').value = d.stage || 'primeira_visita';
-  document.getElementById('d-loja').value = d.loja || 'Guimarães';
+  document.getElementById('d-loja').value = d.loja || '';
   document.getElementById('d-prioridade').value = d.prioridade || '';
   document.getElementById('d-origem').value = d.origem || 'Recomendação';
   document.getElementById('d-notas').value = d.notas || '';
@@ -1779,6 +1780,7 @@ function editDeal(id) {
 function saveDeal() {
   const nome = document.getElementById('d-nome').value.trim();
   if (!nome) { showToast('Nome do noivo obrigatório!'); return; }
+  if (!document.getElementById('d-loja').value) { showToast('Tens de selecionar a loja!'); return; }
   const deal = {
     id: editingDealId || Date.now().toString(),
     nome, email: document.getElementById('d-email').value,
