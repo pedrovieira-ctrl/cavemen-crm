@@ -1282,7 +1282,6 @@ function renderDealCard(d) {
       ${d.casamento ? `<div class="deal-wedding">💍 ${formatDate(d.casamento)}${daysUntil !== null ? ` · <span class="${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}">${daysUntil}d</span>` : ''}</div>` : ''}
       <div class="deal-value">€${(d.valor||0).toLocaleString('pt')}</div>
       <div class="deal-tags">
-        ${d.loja ? `<span class="loja-tag loja-${(d.loja||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}">${d.loja}</span>` : ''}
         ${d.prioridade === 'media' ? '<span class="tag tag-media">🔶 Média</span>' : ''}
         ${d.prioridade === 'urgente' ? '<span class="tag tag-urgente">⚡ Urgente</span>' : ''}
       </div>
