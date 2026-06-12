@@ -96,6 +96,10 @@
   .deal-card .deal-wedding { font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
   .deal-card .deal-value { font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
   .deal-card .deal-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .deal-card .deal-acts { border-top: 1px dashed var(--border); padding-top: 6px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 3px; }
+  .deal-card .deal-act-row { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .deal-card .deal-act-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; color: var(--text); font-weight: 500; }
+  .deal-card .deal-act-date { font-size: 10px; color: var(--accent); font-weight: 600; flex-shrink: 0; }
   .tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
   .tag-fato { background: #ede9fe; color: #7c3aed; }
   .tag-urgente { background: #fee2e2; color: #dc2626; }
@@ -1254,6 +1258,18 @@ function renderPipeline() {
   });
 }
 
+// Atividades pendentes visíveis no cartão do negócio (máx. 3)
+function renderCardActivities(dealId) {
+  const acts = DB.activities
+    .filter(a => a.dealId === dealId && !a.concluida)
+    .sort((a,b) => (a.data||'') < (b.data||'') ? -1 : 1)
+    .slice(0, 3);
+  if (!acts.length) return '';
+  return `<div class="deal-acts">
+    ${acts.map(a => `<div class="deal-act-row">📋 <span class="deal-act-title">${a.titulo}</span>${a.data ? `<span class="deal-act-date">${formatDate(a.data)}</span>` : ''}</div>`).join('')}
+  </div>`;
+}
+
 function renderDealCard(d) {
   const daysUntil = d.casamento ? Math.ceil((new Date(d.casamento) - new Date()) / 86400000) : null;
   const initials = d.nome.split(' ').map(n => n[0]).slice(0,2).join('');
@@ -1269,8 +1285,8 @@ function renderDealCard(d) {
         ${d.prioridade === 'media' ? '<span class="tag tag-media">🔶 Média</span>' : ''}
         ${d.prioridade === 'urgente' ? '<span class="tag tag-urgente">⚡ Urgente</span>' : ''}
       </div>
+      ${renderCardActivities(d.id)}
       <div class="deal-footer">
-        <button class="btn btn-outline btn-sm" style="padding:3px 8px;font-size:11px;" onclick="event.stopPropagation();openNewActivityModal('${d.id}')" title="Adicionar atividade a este negócio">📋 + Atividade</button>
         <div class="deal-days">${d.criado ? `${Math.abs(Math.ceil((new Date(d.criado) - new Date())/86400000))}d atrás` : ''}</div>
       </div>
     </div>`;
