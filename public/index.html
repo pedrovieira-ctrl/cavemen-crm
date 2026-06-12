@@ -216,8 +216,10 @@
   .loja-braga { background:#fee2e2; color:#991b1b; }
   .loja-porto { background:#dbeafe; color:#1e40af; }
   .cal-day .cal-add { opacity:0; transition:opacity 0.15s; }
+  .cal-day .cal-add-row { opacity:0; transition:opacity 0.15s; }
   .cal-day:hover { background:#f5f7ff !important; border-color:var(--accent) !important; }
-  .cal-day:hover .cal-add { opacity:1; }
+  .cal-day:hover .cal-add, .cal-day:hover .cal-add-row { opacity:1; }
+  .cal-day .cal-add:hover { background:#4f46e5 !important; }
 
   /* OVERLAY FECHO PAINEL */
   #panel-overlay { position: fixed; inset: 0; z-index: 199; display: none; cursor: pointer; }
@@ -1434,13 +1436,15 @@ function renderCalendar() {
     const isToday = dateStr === today;
     const dayWeddings = weddings.filter(d => d.casamento === dateStr);
     const dayActs = activities.filter(a => a.data === dateStr);
+    const temEventos = dayWeddings.length || dayActs.length;
     html += `<div class="cal-day" onclick="openActivityForDate('${dateStr}')" style="position:relative;padding:6px;min-height:60px;background:${isToday?'#eff6ff':'var(--card)'};border-radius:8px;border:1px solid ${isToday?'var(--accent)':'var(--border)'};cursor:pointer;" title="Clica para adicionar atividade/evento neste dia">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <span style="font-size:13px;font-weight:${isToday?'800':'500'};color:${isToday?'var(--accent)':'var(--text)'};">${day}</span>
-        <span class="cal-add" style="font-size:13px;font-weight:700;color:var(--accent);line-height:1;">+</span>
+        <span class="cal-add" onclick="event.stopPropagation();openActivityForDate('${dateStr}')" title="Adicionar atividade/evento" style="font-size:15px;font-weight:700;color:#fff;background:var(--accent);width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;">+</span>
       </div>
       ${dayWeddings.map(d => `<div style="font-size:10px;background:#fce7f3;color:#be185d;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">💍${d.nome}</div>`).join('')}
-      ${dayActs.map(a => `<div onclick="event.stopPropagation();editActivityById('${a.id}')" style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${a.titulo}</div>`).join('')}
+      ${dayActs.map(a => `<div onclick="event.stopPropagation();editActivityById('${a.id}')" title="${a.titulo}" style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;">${a.titulo}</div>`).join('')}
+      ${temEventos ? `<div class="cal-add-row" onclick="event.stopPropagation();openActivityForDate('${dateStr}')" style="font-size:10px;color:var(--accent);font-weight:600;margin-top:3px;cursor:pointer;">+ adicionar</div>` : ''}
     </div>`;
   }
   html += '</div>';
