@@ -1115,15 +1115,16 @@ function convertLeadToNegocio(id) {
 function renderDashboard() {
   const total = DB.deals.reduce((s, d) => s + (d.valor || 0), 0);
   const totalSinal = DB.deals.reduce((s, d) => s + (d.sinal || 0), 0);
-  const ativos = DB.deals.filter(d => d.stage !== 'concluido').length;
-  const concluidos = DB.deals.filter(d => d.stage === 'concluido').length;
+  const abertos = DB.deals.filter(d => !d.estado).length;
+  const ganhos = DB.deals.filter(d => d.estado === 'ganho');
+  const receitaGanha = ganhos.reduce((s, d) => s + (d.valor || 0), 0);
 
   document.getElementById('stats-grid').innerHTML = `
     <div class="stat-card">
       <div class="stat-icon" style="background:#ede9fe; float:right;">💼</div>
       <div class="stat-label">Total Negócios</div>
       <div class="stat-value">${DB.deals.length}</div>
-      <div class="stat-change">▲ ${ativos} ativos</div>
+      <div class="stat-change">▲ ${abertos} em curso</div>
     </div>
     <div class="stat-card">
       <div class="stat-icon" style="background:#d1fae5; float:right;">💶</div>
@@ -1132,10 +1133,10 @@ function renderDashboard() {
       <div class="stat-change">Sinal: €${totalSinal.toLocaleString('pt')}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fef3c7; float:right;">💍</div>
-      <div class="stat-label">Casamentos Agendados</div>
-      <div class="stat-value">${DB.deals.filter(d => d.casamento).length}</div>
-      <div class="stat-change">${concluidos} concluídos</div>
+      <div class="stat-icon" style="background:#d1fae5; float:right;">🏆</div>
+      <div class="stat-label">Negócios Ganhos</div>
+      <div class="stat-value">${ganhos.length}</div>
+      <div class="stat-change">€${receitaGanha.toLocaleString('pt')} ganhos</div>
     </div>
     <div class="stat-card">
       <div class="stat-icon" style="background:#fee2e2; float:right;">✅</div>
@@ -1145,9 +1146,9 @@ function renderDashboard() {
     </div>
   `;
 
-  // Upcoming weddings
+  // Upcoming weddings (exclui negócios perdidos)
   const upcoming = DB.deals
-    .filter(d => d.casamento)
+    .filter(d => d.casamento && d.estado !== 'perdido')
     .map(d => ({ ...d, days: Math.ceil((new Date(d.casamento) - new Date()) / 86400000) }))
     .filter(d => d.days >= 0)
     .sort((a, b) => a.days - b.days)
@@ -1228,7 +1229,7 @@ function setLojaFilter(btn) {
 function renderPipeline() {
   const board = document.getElementById('pipeline-board');
   const filterTipo = document.getElementById('pipeline-filter-tipo')?.value || '';
-  let deals = DB.deals;
+  let deals = DB.deals.filter(d => !d.estado); // só negócios em aberto (ganhos/perdidos saem do pipeline)
   if (activeLojaFilter) deals = deals.filter(d => d.loja === activeLojaFilter);
   if (filterTipo) deals = deals.filter(d => d.tipo === filterTipo);
 
@@ -1341,7 +1342,7 @@ function renderNegocios() {
       <td>${d.casamento ? `<div style="font-weight:600;">${formatDate(d.casamento)}</div><div class="${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}" style="font-size:11px;">${daysUntil}d</div>` : '-'}</td>
       <td><span class="tag tag-fato">${d.tipo||'-'}</span>${d.cor ? `<br><span style="font-size:11px;color:var(--text-muted);">${d.cor}</span>` : ''}</td>
       <td><div style="font-weight:700;">€${(d.valor||0).toLocaleString('pt')}</div><div style="font-size:11px;color:var(--text-muted);">Saldo: €${saldoRest.toLocaleString('pt')}</div></td>
-      <td><span class="stage-badge" style="background:${stage?.bg};color:${stage?.color};"><span class="status-dot" style="background:${stage?.color};"></span>${stage?.label||d.stage}</span></td>
+      <td>${d.estado==='ganho' ? '<span class="stage-badge" style="background:#d1fae5;color:#065f46;">🏆 Ganho</span>' : d.estado==='perdido' ? '<span class="stage-badge" style="background:#fee2e2;color:#991b1b;">✗ Perdido</span>' : `<span class="stage-badge" style="background:${stage?.bg};color:${stage?.color};"><span class="status-dot" style="background:${stage?.color};"></span>${stage?.label||d.stage}</span>`}</td>
       <td>${d.sinal > 0 ? `<span style="color:var(--success); font-weight:600;">€${(d.sinal||0).toLocaleString('pt')}</span>` : '<span style="color:var(--text-muted);">-</span>'}</td>
       <td>${d.email ? `<a href="mailto:${d.email}" onclick="event.stopPropagation()" style="color:var(--accent); font-size:12px;">📧</a> ` : ''}${d.tel ? `<a href="tel:${d.tel}" onclick="event.stopPropagation()" style="color:var(--success); font-size:12px;">📞</a>` : ''}</td>
       <td onclick="event.stopPropagation();">
@@ -1497,15 +1498,17 @@ function setLojaFilterCal(btn) {
 // ===================== RELATÓRIOS =====================
 function renderRelatorios() {
   const total = DB.deals.reduce((s,d) => s+(d.valor||0), 0);
-  const concluidos = DB.deals.filter(d => d.stage==='concluido');
-  const taxaConv = DB.deals.length ? Math.round(concluidos.length/DB.deals.length*100) : 0;
+  const ganhos = DB.deals.filter(d => d.estado === 'ganho');
+  const receitaGanha = ganhos.reduce((s,d) => s+(d.valor||0), 0);
+  const fechados = DB.deals.filter(d => d.estado).length;
+  const taxaConv = fechados ? Math.round(ganhos.length/fechados*100) : 0;
   const ticketMedio = DB.deals.length ? Math.round(total/DB.deals.length) : 0;
 
   document.getElementById('relatorios-stats').innerHTML = `
     <div class="stat-card"><div class="stat-label">Receita Total</div><div class="stat-value">€${total.toLocaleString('pt')}</div></div>
-    <div class="stat-card"><div class="stat-label">Taxa de Conversão</div><div class="stat-value">${taxaConv}%</div></div>
+    <div class="stat-card"><div class="stat-label">🏆 Receita Ganha</div><div class="stat-value" style="color:var(--success);">€${receitaGanha.toLocaleString('pt')}</div><div class="stat-change">${ganhos.length} negócios ganhos</div></div>
+    <div class="stat-card"><div class="stat-label">Taxa de Conversão</div><div class="stat-value">${taxaConv}%</div><div class="stat-change">dos negócios fechados</div></div>
     <div class="stat-card"><div class="stat-label">Ticket Médio</div><div class="stat-value">€${ticketMedio.toLocaleString('pt')}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Negócios</div><div class="stat-value">${DB.deals.length}</div></div>
   `;
 
   // Tipos chart
@@ -1541,6 +1544,31 @@ function renderRelatorios() {
   });
 }
 
+// ===================== GANHO / PERDIDO =====================
+function markDealEstado(id, estado) {
+  const d = DB.deals.find(x => x.id === id);
+  if (!d) return;
+  d.estado = estado;
+  d.fechado = new Date().toISOString().split('T')[0];
+  d.atualizado = d.fechado;
+  saveDB();
+  renderAll();
+  openDetail(id);
+  showToast(estado === 'ganho' ? `🏆 Negócio ganho: ${d.nome}!` : `Negócio marcado como perdido: ${d.nome}`);
+}
+
+function reopenDeal(id) {
+  const d = DB.deals.find(x => x.id === id);
+  if (!d) return;
+  delete d.estado;
+  delete d.fechado;
+  d.atualizado = new Date().toISOString().split('T')[0];
+  saveDB();
+  renderAll();
+  openDetail(id);
+  showToast(`Negócio reaberto: ${d.nome}`);
+}
+
 // ===================== DETAIL PANEL =====================
 function openDetail(id) {
   const d = DB.deals.find(x => x.id === id);
@@ -1557,18 +1585,30 @@ function openDetail(id) {
         <div class="detail-sub">${stage?.label||d.stage} · ${d.tipo||''}</div>
       </div>
       <div style="display:flex;gap:6px;align-items:flex-start;">
+        ${!d.estado ? `
+        <button class="btn btn-sm" style="background:var(--success);color:#fff;font-weight:700;" onclick="markDealEstado('${d.id}','ganho')">🏆 Ganho</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;font-weight:700;" onclick="markDealEstado('${d.id}','perdido')">✗ Perdido</button>` : `
+        <button class="btn btn-outline btn-sm" onclick="reopenDeal('${d.id}')">↩️ Reabrir</button>`}
         <button class="btn btn-outline btn-sm" onclick="editDeal('${d.id}')">✏️</button>
         <button class="modal-close" onclick="closeDetail()">✕</button>
       </div>
     </div>
 
+    ${d.estado ? `
+    <div style="padding:14px 20px;background:${d.estado==='ganho'?'#d1fae5':'#fee2e2'};border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;">${d.estado==='ganho'?'🏆':'✗'}</span>
+      <div>
+        <div style="font-size:14px;font-weight:800;color:${d.estado==='ganho'?'#065f46':'#991b1b'};">Negócio ${d.estado==='ganho'?'Ganho':'Perdido'}</div>
+        ${d.fechado ? `<div style="font-size:11px;color:${d.estado==='ganho'?'#065f46':'#991b1b'};opacity:0.8;">Fechado em ${formatDate(d.fechado)}</div>` : ''}
+      </div>
+    </div>` : `
     <div style="padding:12px 20px;background:${stage?.bg};border-bottom:1px solid var(--border);">
       <div style="font-size:11px;color:${stage?.color};font-weight:700;text-transform:uppercase;margin-bottom:6px;">Progresso do Pipeline</div>
       <div class="stage-progress">
         ${STAGES.map((s,i) => `<div class="stage-dot ${i < stageIdx ? 'done' : i === stageIdx ? 'current' : ''}" title="${s.label}"></div>`).join('')}
       </div>
       <div style="font-size:12px;color:${stage?.color};font-weight:600;">${stage?.label}</div>
-    </div>
+    </div>`}
 
     <div class="detail-section">
       <h4>Informação Financeira</h4>
