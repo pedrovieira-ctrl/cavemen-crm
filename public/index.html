@@ -1264,7 +1264,6 @@ function renderDealCard(d) {
         ${d.sinal >= d.valor && d.valor > 0 ? '<span class="tag tag-sinal">✓ Pago</span>' : (d.sinal > 0 ? '<span class="tag tag-sinal">~ Sinal</span>' : '')}
       </div>
       <div class="deal-footer">
-        <div class="deal-avatar">${initials}</div>
         <div class="deal-days">${d.criado ? `${Math.abs(Math.ceil((new Date(d.criado) - new Date())/86400000))}d atrás` : ''}</div>
       </div>
     </div>`;
