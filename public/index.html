@@ -783,9 +783,9 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modal-deal')">Cancelar</button>
+      <span id="d-save-status" style="margin-right:auto;font-size:12px;color:var(--success);font-weight:600;"></span>
       <button class="btn btn-outline" onclick="generateDealPDF()" style="border-color:var(--accent);color:var(--accent);">🖨️ Gerar PDF</button>
-      <button class="btn btn-primary" onclick="saveDeal()">💾 Guardar Negócio</button>
+      <button class="btn btn-primary" onclick="saveDeal()">✓ Concluído</button>
     </div>
   </div>
 </div>
@@ -1701,6 +1701,8 @@ function moveToNextStage(id) {
 
 // ===================== MODALS =====================
 function openNewDealModal(stage = 'contacto') {
+  clearTimeout(dealAutoSaveTimer); dealAutoSaveTimer = null;
+  document.getElementById('d-save-status').textContent = '';
   editingDealId = null;
   document.getElementById('modal-deal-title').textContent = 'Novo Negócio';
   ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-forro','d-forropedido','d-botoespunho','d-baixogola'].forEach(id => document.getElementById(id).value = '');
@@ -1722,6 +1724,8 @@ function openNewDealModal(stage = 'contacto') {
 function editDeal(id) {
   const d = DB.deals.find(x => x.id === id);
   if (!d) return;
+  clearTimeout(dealAutoSaveTimer); dealAutoSaveTimer = null;
+  document.getElementById('d-save-status').textContent = '';
   editingDealId = id;
   document.getElementById('modal-deal-title').textContent = 'Editar Negócio';
   document.getElementById('d-nome').value = d.nome || '';
@@ -1781,10 +1785,24 @@ function editDeal(id) {
   document.getElementById('modal-deal').classList.add('open');
 }
 
-function saveDeal() {
+let dealAutoSaveTimer = null;
+
+function scheduleDealAutoSave() {
+  clearTimeout(dealAutoSaveTimer);
+  dealAutoSaveTimer = setTimeout(() => { dealAutoSaveTimer = null; saveDealCore(true); }, 600);
+}
+
+// Auto-gravação: qualquer alteração nos campos da ficha do negócio grava sozinha
+document.querySelectorAll('#modal-deal input, #modal-deal select, #modal-deal textarea').forEach(el => {
+  el.addEventListener('input', scheduleDealAutoSave);
+  el.addEventListener('change', scheduleDealAutoSave);
+});
+
+function saveDealCore(silent = false) {
   const nome = document.getElementById('d-nome').value.trim();
-  if (!nome) { showToast('Nome do noivo obrigatório!'); return; }
-  if (!document.getElementById('d-loja').value) { showToast('Tens de selecionar a loja!'); return; }
+  if (!nome) { if (!silent) showToast('Nome do noivo obrigatório!'); return false; }
+  if (!document.getElementById('d-loja').value) { if (!silent) showToast('Tens de selecionar a loja!'); return false; }
+  const wasNew = !editingDealId;
   const deal = {
     id: editingDealId || Date.now().toString(),
     nome, email: document.getElementById('d-email').value,
@@ -1839,26 +1857,38 @@ function saveDeal() {
         gemeos: document.getElementById('mca-gemeos').value,
       },
     },
-    criado: editingDealId ? (DB.deals.find(d=>d.id===editingDealId)?.criado || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
+    criado: !wasNew ? (DB.deals.find(d=>d.id===editingDealId)?.criado || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     atualizado: new Date().toISOString().split('T')[0],
   };
-  if (editingDealId) {
+  if (!wasNew) {
     const idx = DB.deals.findIndex(d => d.id === editingDealId);
     if (idx > -1) DB.deals[idx] = deal;
   } else {
     DB.deals.push(deal);
+    // a partir daqui as próximas gravações automáticas atualizam este negócio
+    editingDealId = deal.id;
+    document.getElementById('modal-deal-title').textContent = 'Editar Negócio';
   }
-  saveDB();
-  closeModal('modal-deal');
-  renderAll();
   // Se convertido de lead, remove a lead
   const fromLead = document.getElementById('modal-deal').dataset.fromLead;
-  if (fromLead && !editingDealId) {
+  if (fromLead && wasNew) {
     DB.leads = (DB.leads || []).filter(l => l.id !== fromLead);
     delete document.getElementById('modal-deal').dataset.fromLead;
     showToast(`Lead convertida em negócio: ${nome} ✅`);
-  } else {
-    showToast(`${editingDealId ? 'Negócio atualizado' : 'Novo negócio criado'}: ${nome}`);
+  }
+  saveDB();
+  renderAll();
+  const st = document.getElementById('d-save-status');
+  if (st) st.textContent = '✓ Guardado automaticamente às ' + new Date().toLocaleTimeString('pt', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  return true;
+}
+
+function saveDeal() {
+  clearTimeout(dealAutoSaveTimer); dealAutoSaveTimer = null;
+  const nome = document.getElementById('d-nome').value.trim();
+  if (saveDealCore(false)) {
+    closeModal('modal-deal');
+    showToast(`Negócio guardado: ${nome}`);
   }
 }
 
@@ -2138,7 +2168,14 @@ function deleteActivityFromModal() {
   showToast('Atividade eliminada.');
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  // ao fechar a ficha do negócio, garantir que alterações pendentes ficam gravadas
+  if (id === 'modal-deal' && dealAutoSaveTimer) {
+    clearTimeout(dealAutoSaveTimer); dealAutoSaveTimer = null;
+    saveDealCore(true);
+  }
+  document.getElementById(id).classList.remove('open');
+}
 
 // ===================== UTILS =====================
 function formatDate(str) {
