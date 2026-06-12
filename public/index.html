@@ -764,6 +764,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-deal')">Cancelar</button>
+      <button class="btn btn-outline" onclick="generateDealPDF()" style="border-color:var(--accent);color:var(--accent);">🖨️ Gerar PDF</button>
       <button class="btn btn-primary" onclick="saveDeal()">💾 Guardar Negócio</button>
     </div>
   </div>
@@ -1826,6 +1827,166 @@ function deleteDeal(id) {
   saveDB();
   renderAll();
   showToast('Negócio eliminado.');
+}
+
+// ===================== GERAR PDF / IMPRIMIR FICHA =====================
+function generateDealPDF() {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const nome = v('d-nome');
+  if (!nome) { showToast('Preenche o nome do noivo antes de gerar o PDF!'); return; }
+
+  const tipoLabel = { primeira_visita:'1ª Visita', segunda_visita:'2ª Visita', producao:'Em Produção', primeira_prova:'1ª Prova', prova_final:'Prova Final', entrega:'Entrega' };
+  const acessorios = ['Gravata','Sapatos','Camisa','Meias','Cinto'].filter(a => document.getElementById('ac-'+a.toLowerCase())?.checked);
+  const valor = parseFloat(v('d-valor')) || 0;
+  const sinal = parseFloat(v('d-sinal')) || 0;
+  const falta = valor - sinal;
+  const casamentoFmt = v('d-casamento') ? formatDate(v('d-casamento')) : '—';
+
+  const dash = s => s && s !== '' ? s : '—';
+  const row = (label, val) => `<tr><td class="lbl">${label}</td><td class="val">${dash(val)}</td></tr>`;
+
+  // Tabelas de medidas
+  const casacoRows = [
+    ['Modelo', v('mc-modelo')], ['Tamanho', v('mc-tamanho')],
+    ['Dist. Ombro ao 1º Botão', v('mc-ombrobtn')], ['Comprimento da Manga', v('mc-compmanga')],
+    ['Largura do Ombro', v('mc-largombro')], ['Largura da Meia-Costa', v('mc-largmeiaCosta')],
+    ['Comprimento das Costas', v('mc-compcostas')], ['Largura 1/2 Peito', v('mc-largpeito')],
+    ['Largura 1/2 Cinta', v('mc-largcinta')],
+  ];
+  const coleteRows = [
+    ['Modelo', v('mco-modelo')], ['Tamanho', v('mco-tamanho')],
+    ['A — Ombro ao 1º Botão', v('mco-a')], ['B — Comprimento Total', v('mco-b')],
+    ['C — Comprimento das Costas', v('mco-c')],
+  ];
+  const calcaRows = [
+    ['Modelo', v('mca-modelo')], ['Tamanho', v('mca-tamanho')],
+    ['I — Largura da Cinta', v('mca-i')], ['J — Largura da Anca', v('mca-j')],
+    ['K — Largura da Coxa', v('mca-k')], ['L — Largura do Joelho', v('mca-l')],
+    ['M — Comprimento Total', v('mca-m')], ['N — Comprimento Entre Pernas', v('mca-n')],
+    ['O — Largura da Baínha', v('mca-o')], ['Largura dos Gémeos', v('mca-gemeos')],
+  ];
+  const medTable = (titulo, rows) => `
+    <div class="med-block">
+      <div class="med-title">${titulo}</div>
+      <table class="med-grid">${rows.map(([l,val]) => `<tr><td class="ml">${l}</td><td class="mv">${dash(val)}</td></tr>`).join('')}</table>
+    </div>`;
+
+  const loja = v('d-loja');
+  const today = new Date().toLocaleDateString('pt', { day:'2-digit', month:'long', year:'numeric' });
+
+  const html = `<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"><title>Ficha de Negócio — ${nome}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; padding:28px 32px; font-size:12px; }
+  .head { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #1a1f36; padding-bottom:14px; margin-bottom:18px; }
+  .head h1 { font-size:22px; letter-spacing:-0.5px; color:#1a1f36; }
+  .head .sub { font-size:11px; color:#666; margin-top:3px; }
+  .head .meta { text-align:right; font-size:11px; color:#444; }
+  .head .loja-badge { display:inline-block; background:#1a1f36; color:#fff; font-weight:700; padding:4px 12px; border-radius:6px; font-size:12px; margin-bottom:4px; }
+  .section { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#1a1f36; border-bottom:1px solid #ddd; padding-bottom:5px; margin:18px 0 10px; }
+  table.info { width:100%; border-collapse:collapse; }
+  table.info td { padding:5px 8px; border-bottom:1px solid #eee; vertical-align:top; }
+  table.info td.lbl { width:38%; color:#666; font-weight:600; }
+  table.info td.val { font-weight:600; color:#1a1a1a; }
+  .two-col { display:flex; gap:24px; }
+  .two-col > table { flex:1; }
+  .fin { display:flex; gap:12px; margin-top:6px; }
+  .fin .box { flex:1; border:1px solid #ddd; border-radius:8px; padding:10px 14px; text-align:center; }
+  .fin .box .b-lbl { font-size:10px; text-transform:uppercase; color:#888; font-weight:700; letter-spacing:0.5px; }
+  .fin .box .b-val { font-size:18px; font-weight:800; margin-top:3px; }
+  .fin .box.total .b-val { color:#1a1f36; }
+  .fin .box.sinal .b-val { color:#059669; }
+  .fin .box.falta .b-val { color:#dc2626; }
+  .acess { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+  .acess .chip { border:1px solid #1a1f36; border-radius:20px; padding:3px 12px; font-size:11px; font-weight:600; }
+  .med-wrap { display:flex; gap:16px; }
+  .med-block { flex:1; border:1px solid #ddd; border-radius:8px; overflow:hidden; }
+  .med-block .med-title { background:#f1f3f9; font-weight:700; padding:7px 10px; font-size:12px; color:#1a1f36; }
+  table.med-grid { width:100%; border-collapse:collapse; }
+  table.med-grid td { padding:4px 10px; border-bottom:1px solid #eee; font-size:11px; }
+  table.med-grid td.ml { color:#666; }
+  table.med-grid td.mv { text-align:right; font-weight:700; }
+  .notas { border:1px solid #ddd; border-radius:8px; padding:10px 14px; min-height:50px; font-size:12px; white-space:pre-wrap; }
+  .footer { margin-top:24px; padding-top:12px; border-top:1px solid #ddd; display:flex; justify-content:space-between; font-size:10px; color:#999; }
+  .sign { margin-top:30px; display:flex; gap:40px; }
+  .sign .line { flex:1; border-top:1px solid #333; padding-top:5px; text-align:center; font-size:11px; color:#666; }
+  @media print { body { padding:0; } @page { margin:14mm; } }
+</style></head><body>
+  <div class="head">
+    <div>
+      <h1>Cavemen Store</h1>
+      <div class="sub">Ficha de Negócio · Fatos de Noivo</div>
+    </div>
+    <div class="meta">
+      ${loja ? `<div class="loja-badge">📍 ${loja}</div><br>` : ''}
+      <span>Emitido em ${today}</span>
+    </div>
+  </div>
+
+  <div class="section">Informação do Noivo</div>
+  <div class="two-col">
+    <table class="info">
+      ${row('Nome do Noivo', nome)}
+      ${row('Data do Casamento', casamentoFmt)}
+      ${row('Telefone', v('d-tel'))}
+    </table>
+    <table class="info">
+      ${row('Email', v('d-email'))}
+      ${row('Etapa', tipoLabel[v('d-etapa')] || '—')}
+      ${row('Origem', v('d-origem'))}
+    </table>
+  </div>
+
+  <div class="section">Financeiro</div>
+  <div class="fin">
+    <div class="box total"><div class="b-lbl">Valor Total</div><div class="b-val">€${valor.toLocaleString('pt')}</div></div>
+    <div class="box sinal"><div class="b-lbl">Sinal Pago</div><div class="b-val">€${sinal.toLocaleString('pt')}</div></div>
+    <div class="box falta"><div class="b-lbl">Falta Pagar</div><div class="b-val">€${falta.toLocaleString('pt')}</div></div>
+  </div>
+
+  <div class="section">Detalhes do Fato</div>
+  <div class="two-col">
+    <table class="info">
+      ${row('Tipo de Fato', v('d-tipo'))}
+      ${row('Colete', v('d-colete'))}
+      ${row('Cor Principal', v('d-cor'))}
+      ${row('Tecido', v('d-tecido'))}
+    </table>
+    <table class="info">
+      ${row('Fatos de Coleção', v('d-fatocolecao'))}
+      ${row('Forro Personalizado', v('d-forro'))}
+      ${row('Botões de Punho', v('d-botoespunho'))}
+      ${row('Baixo de Gola', v('d-baixogola'))}
+    </table>
+  </div>
+  ${acessorios.length ? `<div style="margin-top:10px;"><strong style="font-size:11px;color:#666;">Acessórios:</strong><div class="acess">${acessorios.map(a => `<span class="chip">${a}</span>`).join('')}</div></div>` : ''}
+
+  <div class="section">Medidas (cm)</div>
+  <div class="med-wrap">
+    ${medTable('🧥 Casaco', casacoRows)}
+    ${medTable('🦺 Colete', coleteRows)}
+    ${medTable('👖 Calça', calcaRows)}
+  </div>
+
+  ${v('d-notas') ? `<div class="section">Observações</div><div class="notas">${v('d-notas')}</div>` : ''}
+
+  <div class="sign">
+    <div class="line">Assinatura do Cliente</div>
+    <div class="line">Responsável da Loja</div>
+  </div>
+
+  <div class="footer">
+    <span>Cavemen Store · CRM Noivos</span>
+    <span>${nome} — ${loja || ''}</span>
+  </div>
+
+  <script>window.onload = () => { window.print(); };<\/script>
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { showToast('Permite pop-ups para gerar o PDF.'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 
 function openNewActivityModal(dealId = null) {
