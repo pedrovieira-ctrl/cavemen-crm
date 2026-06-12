@@ -215,6 +215,9 @@
   .loja-guimaraes { background:#d1fae5; color:#065f46; }
   .loja-braga { background:#fee2e2; color:#991b1b; }
   .loja-porto { background:#dbeafe; color:#1e40af; }
+  .cal-day .cal-add { opacity:0; transition:opacity 0.15s; }
+  .cal-day:hover { background:#f5f7ff !important; border-color:var(--accent) !important; }
+  .cal-day:hover .cal-add { opacity:1; }
 
   /* OVERLAY FECHO PAINEL */
   #panel-overlay { position: fixed; inset: 0; z-index: 199; display: none; cursor: pointer; }
@@ -774,7 +777,7 @@
 <div class="modal-overlay" id="modal-activity">
   <div class="modal" style="width:480px;">
     <div class="modal-header">
-      <h2>Nova Atividade</h2>
+      <h2 id="modal-activity-title">Nova Atividade</h2>
       <button class="modal-close" onclick="closeModal('modal-activity')">✕</button>
     </div>
     <div class="modal-body">
@@ -1430,10 +1433,13 @@ function renderCalendar() {
     const isToday = dateStr === today;
     const dayWeddings = weddings.filter(d => d.casamento === dateStr);
     const dayActs = activities.filter(a => a.data === dateStr);
-    html += `<div style="padding:6px;min-height:60px;background:${isToday?'#eff6ff':'var(--card)'};border-radius:8px;border:1px solid ${isToday?'var(--accent)':'var(--border)'};cursor:pointer;" title="${[...dayWeddings.map(d=>'💍'+d.nome), ...dayActs.map(a=>a.titulo)].join('\n')}">
-      <div style="font-size:13px;font-weight:${isToday?'800':'500'};color:${isToday?'var(--accent)':'var(--text)'};">${day}</div>
+    html += `<div class="cal-day" onclick="openActivityForDate('${dateStr}')" style="position:relative;padding:6px;min-height:60px;background:${isToday?'#eff6ff':'var(--card)'};border-radius:8px;border:1px solid ${isToday?'var(--accent)':'var(--border)'};cursor:pointer;" title="Clica para adicionar atividade/evento neste dia">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;font-weight:${isToday?'800':'500'};color:${isToday?'var(--accent)':'var(--text)'};">${day}</span>
+        <span class="cal-add" style="font-size:13px;font-weight:700;color:var(--accent);line-height:1;">+</span>
+      </div>
       ${dayWeddings.map(d => `<div style="font-size:10px;background:#fce7f3;color:#be185d;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">💍${d.nome}</div>`).join('')}
-      ${dayActs.map(a => `<div style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${a.titulo}</div>`).join('')}
+      ${dayActs.map(a => `<div onclick="event.stopPropagation();editActivityById('${a.id}')" style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${a.titulo}</div>`).join('')}
     </div>`;
   }
   html += '</div>';
@@ -1991,6 +1997,8 @@ function generateDealPDF() {
 
 function openNewActivityModal(dealId = null) {
   editingActivityId = null;
+  document.getElementById('modal-activity-title').textContent = 'Nova Atividade';
+  document.getElementById('a-tipo').value = 'ligar';
   document.getElementById('a-titulo').value = '';
   document.getElementById('a-notas').value = '';
   document.getElementById('a-data').value = new Date().toISOString().split('T')[0];
@@ -2014,11 +2022,37 @@ function populateActivityClientSelect(loja, selectedDealId = null) {
   if (selectedDealId) sel.value = selectedDealId;
 }
 
+// Abrir formulário de atividade/evento a partir do calendário com a data pré-preenchida
+function openActivityForDate(dateStr) {
+  openNewActivityModal();
+  document.getElementById('a-data').value = dateStr;
+  // pré-selecionar loja pelo filtro do calendário, se houver
+  if (activeLojaFilterCal) document.getElementById('a-loja').value = activeLojaFilterCal;
+}
+
+// Editar atividade existente (a partir do calendário ou lista)
+function editActivityById(id) {
+  const a = DB.activities.find(x => x.id === id);
+  if (!a) return;
+  editingActivityId = id;
+  document.getElementById('modal-activity-title').textContent = 'Editar Atividade';
+  document.getElementById('a-tipo').value = a.tipo || 'tarefa';
+  document.getElementById('a-titulo').value = a.titulo || '';
+  document.getElementById('a-notas').value = a.notas || '';
+  document.getElementById('a-data').value = a.data || '';
+  document.getElementById('a-hora').value = a.hora || '';
+  const loja = a.loja || DB.deals.find(d => d.id === a.dealId)?.loja || '';
+  document.getElementById('a-loja').value = loja;
+  populateActivityClientSelect(loja, a.dealId);
+  document.getElementById('modal-activity').classList.add('open');
+}
+
 function saveActivity() {
   const titulo = document.getElementById('a-titulo').value.trim();
   if (!titulo) { showToast('Título obrigatório!'); return; }
   const loja = document.getElementById('a-loja').value;
   if (!loja) { showToast('Tens de selecionar uma loja!'); return; }
+  const existing = editingActivityId ? DB.activities.find(a => a.id === editingActivityId) : null;
   const act = {
     id: editingActivityId || Date.now().toString(),
     tipo: document.getElementById('a-tipo').value,
@@ -2028,8 +2062,8 @@ function saveActivity() {
     data: document.getElementById('a-data').value,
     hora: document.getElementById('a-hora').value,
     notas: document.getElementById('a-notas').value,
-    concluida: false,
-    criado: new Date().toISOString().split('T')[0],
+    concluida: existing ? existing.concluida : false,
+    criado: existing ? existing.criado : new Date().toISOString().split('T')[0],
   };
   if (editingActivityId) {
     const idx = DB.activities.findIndex(a => a.id === editingActivityId);
