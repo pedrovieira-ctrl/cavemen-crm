@@ -824,6 +824,7 @@
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger" id="a-delete-btn" style="display:none;margin-right:auto;" onclick="deleteActivityFromModal()">🗑 Eliminar</button>
       <button class="btn btn-outline" onclick="closeModal('modal-activity')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveActivity()">💾 Guardar</button>
     </div>
@@ -1997,6 +1998,7 @@ function generateDealPDF() {
 
 function openNewActivityModal(dealId = null) {
   editingActivityId = null;
+  document.getElementById('a-delete-btn').style.display = 'none';
   document.getElementById('modal-activity-title').textContent = 'Nova Atividade';
   document.getElementById('a-tipo').value = 'ligar';
   document.getElementById('a-titulo').value = '';
@@ -2035,6 +2037,7 @@ function editActivityById(id) {
   const a = DB.activities.find(x => x.id === id);
   if (!a) return;
   editingActivityId = id;
+  document.getElementById('a-delete-btn').style.display = '';
   document.getElementById('modal-activity-title').textContent = 'Editar Atividade';
   document.getElementById('a-tipo').value = a.tipo || 'tarefa';
   document.getElementById('a-titulo').value = a.titulo || '';
@@ -2085,6 +2088,16 @@ function toggleActivity(id) {
 function deleteActivity(id) {
   DB.activities = DB.activities.filter(a => a.id !== id);
   saveDB();
+  renderAll();
+  showToast('Atividade eliminada.');
+}
+
+function deleteActivityFromModal() {
+  if (!editingActivityId) return;
+  if (!confirm('Eliminar esta atividade/evento?')) return;
+  DB.activities = DB.activities.filter(a => a.id !== editingActivityId);
+  saveDB();
+  closeModal('modal-activity');
   renderAll();
   showToast('Atividade eliminada.');
 }
