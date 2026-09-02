@@ -684,99 +684,6 @@
         <label class="acess-check"><input type="checkbox" id="ac-cinto"> 🪡 Cinto</label>
       </div>
 
-      <div class="form-section">Medidas (cm)</div>
-      <div class="form-subsection">🧥 Casaco</div>
-      <div class="form-row">
-        <div class="form-group"><label>Modelo</label><input id="mc-modelo" type="text" placeholder="Nome do modelo..."></div>
-        <div class="form-group"><label>Tamanho</label>
-          <select id="mc-tamanho">
-            <option value="">— Selecionar —</option>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-            <option value="XL">XL</option>
-            <option value="2XL">2XL</option>
-            <option value="3XL">3XL</option>
-            <option value="4XL">4XL</option>
-            <option value="5XL">5XL</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Dist. Ombro ao 1º Botão</label><input id="mc-ombrobtn" type="text" placeholder="cm"></div>
-        <div class="form-group"><label>Comprimento da Manga</label><input id="mc-compmanga" type="text" placeholder="cm"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Largura do Ombro</label><input id="mc-largombro" type="text" placeholder="cm"></div>
-        <div class="form-group"><label>Largura da Meia-Costa</label><input id="mc-largmeiaCosta" type="text" placeholder="cm"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Comprimento das Costas (excl. gola)</label><input id="mc-compcostas" type="text" placeholder="cm"></div>
-        <div class="form-group"><label>Largura 1/2 Peito</label><input id="mc-largpeito" type="text" placeholder="cm"></div>
-      </div>
-      <div class="form-row full">
-        <div class="form-group"><label>Largura 1/2 Cinta</label><input id="mc-largcinta" type="text" placeholder="cm"></div>
-      </div>
-
-      <div class="form-subsection">🦺 Colete</div>
-      <div class="form-row">
-        <div class="form-group"><label>Modelo</label><input id="mco-modelo" type="text" placeholder="Nome do modelo..."></div>
-        <div class="form-group"><label>Tamanho</label>
-          <select id="mco-tamanho">
-            <option value="">— Selecionar —</option>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-            <option value="XL">XL</option>
-            <option value="2XL">2XL</option>
-            <option value="3XL">3XL</option>
-            <option value="4XL">4XL</option>
-            <option value="5XL">5XL</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>A — Largura do Ombro ao 1º Botão</label><input id="mco-a" type="text" placeholder="cm"></div>
-        <div class="form-group"><label>B — Comprimento Total</label><input id="mco-b" type="text" placeholder="cm"></div>
-      </div>
-      <div class="form-row full">
-        <div class="form-group"><label>C — Comprimento das Costas</label><input id="mco-c" type="text" placeholder="cm"></div>
-      </div>
-
-      <div class="form-subsection">👖 Calça</div>
-      <div class="form-row">
-        <div class="form-group"><label>Modelo</label><input id="mca-modelo" type="text" placeholder="Nome do modelo..."></div>
-        <div class="form-group"><label>Tamanho</label>
-          <select id="mca-tamanho">
-            <option value="">— Selecionar —</option>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-            <option value="XL">XL</option>
-            <option value="2XL">2XL</option>
-            <option value="3XL">3XL</option>
-            <option value="4XL">4XL</option>
-            <option value="5XL">5XL</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>I — Largura da Cinta</label><input id="mca-i" type="text" placeholder="cm"></div>
-        <div class="form-group"><label>J — Largura da Anca</label><input id="mca-j" type="text" placeholder="cm"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>K — Largura da Coxa</label><input id="mca-k" type="text" placeholder="cm"></div>
-        <div class="form-group"><label>L — Largura do Joelho</label><input id="mca-l" type="text" placeholder="cm"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>M — Comprimento Total (sem cós)</label><input id="mca-m" type="text" placeholder="cm"></div>
-        <div class="form-group"><label>N — Comprimento Entre Pernas</label><input id="mca-n" type="text" placeholder="cm"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>O — Largura da Baínha</label><input id="mca-o" type="text" placeholder="cm"></div>
-        <div class="form-group"><label>Largura dos Gémeos</label><input id="mca-gemeos" type="text" placeholder="cm"></div>
-      </div>
-
       <div class="form-section">Notas</div>
       <div class="form-row full">
         <div class="form-group"><label>Observações</label><textarea id="d-notas" placeholder="Preferências, pedidos especiais, observações..."></textarea></div>
@@ -1751,12 +1658,6 @@ function openNewDealModal(stage = 'contacto') {
   ['d-tipo','d-colete','d-prioridade'].forEach(id => document.getElementById(id).value = '');
   ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
   document.getElementById('d-loja').value = activeLojaFilter || '';
-  ['mc-modelo','mc-ombrobtn','mc-compmanga','mc-largombro','mc-largmeiaCosta','mc-compcostas','mc-largpeito','mc-largcinta'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('mc-tamanho').value = '';
-  ['mco-modelo','mco-a','mco-b','mco-c'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('mco-tamanho').value = '';
-  ['mca-modelo','mca-i','mca-j','mca-k','mca-l','mca-m','mca-n','mca-o','mca-gemeos'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('mca-tamanho').value = '';
   document.getElementById('d-etapa').value = stage;
   document.getElementById('d-casamento').value = '';
   document.getElementById('modal-deal').classList.add('open');
