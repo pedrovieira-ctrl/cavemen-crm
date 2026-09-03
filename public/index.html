@@ -577,7 +577,7 @@
       <div class="form-section">Informação do Noivo</div>
       <div class="form-row">
         <div class="form-group"><label>Nome do Noivo *</label><input id="d-nome" type="text" placeholder="Ex: João Silva"></div>
-        <div class="form-group"><label>Data do Casamento *</label><input id="d-casamento" type="date"></div>
+        <div class="form-group"><label>Data de Entrega do Fato *</label><input id="d-casamento" type="date"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Telefone</label><input id="d-tel" type="tel" placeholder="+351 9XX XXX XXX"></div>
@@ -1209,7 +1209,7 @@ function renderDealCard(d) {
       ondragstart="onDragStart(event, '${d.id}')"
       onclick="openDetail('${d.id}')">
       <div class="deal-name">${d.nome}</div>
-      ${d.casamento ? `<div class="deal-wedding">💍 ${formatDate(d.casamento)}${daysUntil !== null ? ` · <span class="${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}">${daysUntil}d</span>` : ''}</div>` : ''}
+      ${d.casamento ? `<div class="deal-wedding">📦 ${formatDate(d.casamento)}${daysUntil !== null ? ` · <span class="${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}">${daysUntil}d</span>` : ''}</div>` : ''}
       <div class="deal-value">€${(d.valor||0).toLocaleString('pt')}</div>
       <div class="deal-tags">
         ${d.prioridade === 'media' ? '<span class="tag tag-media">🔶 Média</span>' : ''}
