@@ -1502,7 +1502,7 @@ function openDetail(id) {
   const stage = STAGES.find(s => s.id === d.stage);
   const stageIdx = STAGES.findIndex(s => s.id === d.stage);
   const daysUntil = d.casamento ? Math.ceil((new Date(d.casamento) - new Date()) / 86400000) : null;
-  const dealActivities = DB.activities.filter(a => a.dealId === id).sort((a,b) => a.data < b.data ? 1 : -1);
+  const dealActivities = DB.activities.filter(a => a.dealId === id && !a.concluida).sort((a,b) => a.data < b.data ? 1 : -1);
 
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-header">
