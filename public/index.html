@@ -1696,34 +1696,6 @@ function editDeal(id) {
   document.getElementById('d-prioridade').value = d.prioridade || '';
   document.getElementById('d-origem').value = d.origem || 'Recomendação';
   document.getElementById('d-notas').value = d.notas || '';
-  const m = d.medidas || {};
-  const mc = m.casaco || {};
-  document.getElementById('mc-modelo').value = mc.modelo || '';
-  document.getElementById('mc-tamanho').value = mc.tamanho || '';
-  document.getElementById('mc-ombrobtn').value = mc.ombrobtn || '';
-  document.getElementById('mc-compmanga').value = mc.compmanga || '';
-  document.getElementById('mc-largombro').value = mc.largombro || '';
-  document.getElementById('mc-largmeiaCosta').value = mc.largmeiaCosta || '';
-  document.getElementById('mc-compcostas').value = mc.compcostas || '';
-  document.getElementById('mc-largpeito').value = mc.largpeito || '';
-  document.getElementById('mc-largcinta').value = mc.largcinta || '';
-  const mco = m.colete || {};
-  document.getElementById('mco-modelo').value = mco.modelo || '';
-  document.getElementById('mco-tamanho').value = mco.tamanho || '';
-  document.getElementById('mco-a').value = mco.a || '';
-  document.getElementById('mco-b').value = mco.b || '';
-  document.getElementById('mco-c').value = mco.c || '';
-  const mca = m.calca || {};
-  document.getElementById('mca-modelo').value = mca.modelo || '';
-  document.getElementById('mca-tamanho').value = mca.tamanho || '';
-  document.getElementById('mca-i').value = mca.i || '';
-  document.getElementById('mca-j').value = mca.j || '';
-  document.getElementById('mca-k').value = mca.k || '';
-  document.getElementById('mca-l').value = mca.l || '';
-  document.getElementById('mca-m').value = mca.m || '';
-  document.getElementById('mca-n').value = mca.n || '';
-  document.getElementById('mca-o').value = mca.o || '';
-  document.getElementById('mca-gemeos').value = mca.gemeos || '';
   document.getElementById('modal-deal').classList.add('open');
 }
 
