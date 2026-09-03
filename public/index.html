@@ -1567,7 +1567,7 @@ function openDetail(id) {
       <h4>Contacto</h4>
       <div class="detail-field"><span class="df-label">Telefone</span>${d.tel ? `<a href="tel:${d.tel}" style="color:var(--accent);font-weight:600;">${d.tel}</a>` : '<span class="df-value">-</span>'}</div>
       <div class="detail-field"><span class="df-label">Email</span>${d.email ? `<a href="mailto:${d.email}" style="color:var(--accent);font-weight:600;font-size:12px;">${d.email}</a>` : '<span class="df-value">-</span>'}</div>
-      <div class="detail-field"><span class="df-label">Casamento</span><span class="df-value ${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}">${d.casamento?formatDate(d.casamento)+' ('+daysUntil+'d)':'-'}</span></div>
+      <div class="detail-field"><span class="df-label">Entrega do Fato</span><span class="df-value ${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}">${d.casamento?formatDate(d.casamento)+' ('+daysUntil+'d)':'-'}</span></div>
       <div class="detail-field"><span class="df-label">Origem</span><span class="df-value">${d.origem||'-'}</span></div>
     </div>
 
