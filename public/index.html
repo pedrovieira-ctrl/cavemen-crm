@@ -1414,11 +1414,14 @@ function renderCalendar() {
   document.getElementById('cal-weddings-list').innerHTML = weddings.length ? weddings.map(d => `
     <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
       <div style="font-size:24px;">💍</div>
-      <div>
-        <div style="font-weight:700;">${d.nome}</div>
-        <div style="font-size:12px;color:var(--text-muted);">${formatDate(d.casamento)} · ${d.tipo||''} ${d.cor?'· '+d.cor:''}</div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div style="font-weight:700;">${d.nome}</div>
+          <div style="font-weight:600;color:var(--accent);">${formatDate(d.casamento)}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${d.tipo||''} ${d.cor?'· '+d.cor:''}</div>
       </div>
-      <div style="margin-left:auto;font-weight:800;color:var(--accent);">€${(d.valor||0).toLocaleString('pt')}</div>
+      <div style="font-weight:800;color:var(--accent);">€${(d.valor||0).toLocaleString('pt')}</div>
     </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px;">Sem casamentos este mês.</p>';
 }
 function calPrev() { calCurrentDate.setMonth(calCurrentDate.getMonth()-1); renderCalendar(); }
