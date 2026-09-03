@@ -1783,7 +1783,11 @@ function saveDealCore(silent = false) {
   };
   if (!wasNew) {
     const idx = DB.deals.findIndex(d => d.id === editingDealId);
-    if (idx > -1) DB.deals[idx] = deal;
+    if (idx > -1) {
+      const oldDeal = DB.deals[idx];
+      deal.pdfFile = oldDeal.pdfFile;
+      DB.deals[idx] = deal;
+    }
   } else {
     DB.deals.push(deal);
     // a partir daqui as próximas gravações automáticas atualizam este negócio
