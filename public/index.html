@@ -1404,7 +1404,7 @@ function renderCalendar() {
         <span class="cal-add" onclick="event.stopPropagation();openActivityForDate('${dateStr}')" title="Adicionar atividade/evento" style="font-size:15px;font-weight:700;color:#fff;background:var(--accent);width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;">+</span>
       </div>
       ${dayWeddings.map(d => `<div style="font-size:10px;background:#fce7f3;color:#be185d;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">💍${d.nome}</div>`).join('')}
-      ${dayActs.map(a => `<div onclick="event.stopPropagation();editActivityById('${a.id}')" title="${a.titulo}" style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;">${a.titulo}</div>`).join('')}
+      ${dayActs.map(a => `<div onclick="event.stopPropagation();editActivityById('${a.id}')" title="${a.titulo}" style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;justify-content:space-between;gap:4px;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${a.titulo}</span><span style="flex-shrink:0;">${a.hora || ''}</span></div>`).join('')}
       ${temEventos ? `<div class="cal-add-row" onclick="event.stopPropagation();openActivityForDate('${dateStr}')" style="font-size:10px;color:var(--accent);font-weight:600;margin-top:3px;cursor:pointer;">+ adicionar</div>` : ''}
     </div>`;
   }
