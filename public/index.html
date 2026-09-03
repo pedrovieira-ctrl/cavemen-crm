@@ -711,7 +711,10 @@
     </div>
     <div class="modal-footer">
       <span id="d-save-status" style="margin-right:auto;font-size:12px;color:var(--success);font-weight:600;"></span>
-      <button class="btn btn-outline" onclick="generateDealPDF()" style="border-color:var(--accent);color:var(--accent);">🖨️ Gerar PDF</button>
+      <label class="btn btn-outline" style="border-color:var(--accent);color:var(--accent);cursor:pointer;margin:0;">
+        📎 Anexar PDF
+        <input type="file" accept=".pdf" id="d-pdf-upload" onchange="handlePDFUpload()" style="display:none;">
+      </label>
       <button class="btn btn-primary" onclick="saveDeal()">✓ Concluído</button>
     </div>
   </div>
@@ -1809,6 +1812,27 @@ function deleteDeal(id) {
   saveDB();
   renderAll();
   showToast('Negócio eliminado.');
+}
+
+// ===================== ANEXAR PDF =====================
+function handlePDFUpload() {
+  const input = document.getElementById('d-pdf-upload');
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const pdfData = e.target.result;
+    if (editingDealId) {
+      const deal = DB.deals.find(d => d.id === editingDealId);
+      if (deal) {
+        deal.pdfFile = pdfData;
+        saveDB();
+        showToast('PDF anexado com sucesso!');
+      }
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 // ===================== GERAR PDF / IMPRIMIR FICHA =====================
