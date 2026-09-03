@@ -718,6 +718,7 @@
         📎 Anexar PDF
         <input type="file" accept=".pdf" id="d-pdf-upload" onchange="handlePDFUpload()" style="display:none;">
       </label>
+      <button class="btn btn-outline" id="d-pdf-download-btn" onclick="downloadPDF()" style="border-color:var(--accent);color:var(--accent);cursor:pointer;margin:0;display:none;">📥 Ver PDF</button>
       <button class="btn btn-primary" onclick="saveDeal()">✓ Concluído</button>
     </div>
   </div>
@@ -1689,6 +1690,7 @@ function openNewDealModal(stage = 'contacto') {
   document.getElementById('d-casamento').value = '';
   document.getElementById('d-entrega-loja').value = '';
   document.getElementById('modal-deal').classList.add('open');
+  updatePDFButtonVisibility();
 }
 
 function editDeal(id) {
@@ -1729,6 +1731,7 @@ function editDeal(id) {
   document.getElementById('d-origem').value = d.origem || 'Recomendação';
   document.getElementById('d-notas').value = d.notas || '';
   document.getElementById('modal-deal').classList.add('open');
+  updatePDFButtonVisibility();
 }
 
 let dealAutoSaveTimer = null;
@@ -1834,10 +1837,29 @@ function handlePDFUpload() {
         deal.pdfFile = pdfData;
         saveDB();
         showToast('PDF anexado com sucesso!');
+        updatePDFButtonVisibility();
       }
     }
   };
   reader.readAsDataURL(file);
+}
+function updatePDFButtonVisibility() {
+  const deal = DB.deals.find(d => d.id === editingDealId);
+  const btn = document.getElementById('d-pdf-download-btn');
+  if (deal && deal.pdfFile) {
+    btn.style.display = 'inline-block';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+function downloadPDF() {
+  const deal = DB.deals.find(d => d.id === editingDealId);
+  if (deal && deal.pdfFile) {
+    const link = document.createElement('a');
+    link.href = deal.pdfFile;
+    link.download = (deal.nome || 'documento') + '.pdf';
+    link.click();
+  }
 }
 
 // ===================== GERAR PDF / IMPRIMIR FICHA =====================
