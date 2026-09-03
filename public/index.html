@@ -670,6 +670,9 @@
         <div class="form-group"><label>Forro Personalizado</label><input id="d-forro" type="text" placeholder="Descrição do forro..."></div>
       </div>
       <div class="form-row full">
+        <div class="form-group"><label>Nº de Pedido de Fábrica</label><input id="d-pedidofabrica" type="text" placeholder="Ex: FAB-12345"></div>
+      </div>
+      <div class="form-row full">
         <div class="form-group"><label>Nº de Pedido Forro Personalizado</label><input id="d-forropedido" type="text" placeholder="Ex: 12345"></div>
       </div>
       <div class="form-row">
@@ -1677,7 +1680,7 @@ function openNewDealModal(stage = 'contacto') {
   document.getElementById('d-save-status').textContent = '';
   editingDealId = null;
   document.getElementById('modal-deal-title').textContent = 'Novo Negócio';
-  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-forro','d-forropedido','d-botoespunho','d-baixogola','d-forropersonalizado','d-etapa-producao'].forEach(id => document.getElementById(id).value = '');
+  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-forro','d-pedidofabrica','d-forropedido','d-botoespunho','d-baixogola','d-forropersonalizado','d-etapa-producao'].forEach(id => document.getElementById(id).value = '');
   ['d-valor','d-sinal'].forEach(id => document.getElementById(id).value = '');
   ['d-tipo','d-colete','d-prioridade'].forEach(id => document.getElementById(id).value = '');
   ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
@@ -1706,6 +1709,7 @@ function editDeal(id) {
   document.getElementById('d-tecido').value = d.tecido || '';
   document.getElementById('d-fatocolecao').value = d.fatocolecao || '';
   document.getElementById('d-forro').value = d.forro || '';
+  document.getElementById('d-pedidofabrica').value = d.pedidofabrica || '';
   document.getElementById('d-forropedido').value = d.forropedido || '';
   document.getElementById('d-botoespunho').value = d.botoespunho || '';
   document.getElementById('d-baixogola').value = d.baixogola || '';
@@ -1757,6 +1761,7 @@ function saveDealCore(silent = false) {
     tecido: document.getElementById('d-tecido').value,
     fatocolecao: document.getElementById('d-fatocolecao').value,
     forro: document.getElementById('d-forro').value,
+    pedidofabrica: document.getElementById('d-pedidofabrica').value,
     forropedido: document.getElementById('d-forropedido').value,
     botoespunho: document.getElementById('d-botoespunho').value,
     baixogola: document.getElementById('d-baixogola').value,
@@ -1961,6 +1966,7 @@ function generateDealPDF() {
     <table class="info">
       ${row('Fatos de Coleção', v('d-fatocolecao'))}
       ${row('Forro Personalizado', v('d-forro'))}
+      ${row('Nº Pedido Fábrica', v('d-pedidofabrica'))}
       ${row('Nº Pedido Forro', v('d-forropedido'))}
       ${row('Botões de Punho', v('d-botoespunho'))}
       ${row('Baixo de Gola', v('d-baixogola'))}
