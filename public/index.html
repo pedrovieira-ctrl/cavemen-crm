@@ -576,9 +576,9 @@
       <div class="form-section">Informação do Noivo</div>
       <div class="form-row">
         <div class="form-group"><label>Nome do Noivo *</label><input id="d-nome" type="text" placeholder="Ex: João Silva"></div>
+        <div class="form-group"><label>Telefone</label><input id="d-tel" type="tel" placeholder="+351 9XX XXX XXX"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Telefone</label><input id="d-tel" type="tel" placeholder="+351 9XX XXX XXX"></div>
         <div class="form-group"><label>Email</label><input id="d-email" type="email" placeholder="joao@email.com"></div>
       </div>
       <div class="form-row">
@@ -624,7 +624,10 @@
         </div>
       </div>
       <div class="form-row">
+        <div class="form-group"><label>Data do Casamento</label><input id="d-data-casamento" type="date"></div>
         <div class="form-group"><label>Data de Levantamento em Fábrica</label><input id="d-casamento" type="date"></div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label>Data de Entrega em Loja</label><input id="d-entrega-loja" type="date"></div>
       </div>
       <div class="form-row">
@@ -1579,6 +1582,7 @@ function openDetail(id) {
       <h4>Contacto</h4>
       <div class="detail-field"><span class="df-label">Telefone</span>${d.tel ? `<a href="tel:${d.tel}" style="color:var(--accent);font-weight:600;">${d.tel}</a>` : '<span class="df-value">-</span>'}</div>
       <div class="detail-field"><span class="df-label">Email</span>${d.email ? `<a href="mailto:${d.email}" style="color:var(--accent);font-weight:600;font-size:12px;">${d.email}</a>` : '<span class="df-value">-</span>'}</div>
+      ${d.dataCasamento ? `<div class="detail-field"><span class="df-label">Data do Casamento</span><span class="df-value">${formatDate(d.dataCasamento)}</span></div>` : ''}
       <div class="detail-field"><span class="df-label">Levantamento em Fábrica</span><span class="df-value ${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}">${d.casamento?formatDate(d.casamento)+' ('+daysUntil+'d)':'-'}</span></div>
       ${d.entregaLoja ? `<div class="detail-field"><span class="df-label">Entrega em Loja</span><span class="df-value">${formatDate(d.entregaLoja)}</span></div>` : ''}
       <div class="detail-field"><span class="df-label">Origem</span><span class="df-value">${d.origem||'-'}</span></div>
@@ -1684,7 +1688,7 @@ function openNewDealModal(stage = 'contacto') {
   document.getElementById('d-save-status').textContent = '';
   editingDealId = null;
   document.getElementById('modal-deal-title').textContent = 'Novo Negócio';
-  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-forro','d-pedidofabrica','d-forropedido','d-botoespunho','d-baixogola','d-forropersonalizado','d-etapa-producao'].forEach(id => document.getElementById(id).value = '');
+  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-forro','d-pedidofabrica','d-forropedido','d-botoespunho','d-baixogola','d-forropersonalizado','d-etapa-producao','d-data-casamento'].forEach(id => document.getElementById(id).value = '');
   ['d-valor','d-sinal'].forEach(id => document.getElementById(id).value = '');
   ['d-tipo','d-colete','d-prioridade'].forEach(id => document.getElementById(id).value = '');
   ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
@@ -1706,6 +1710,7 @@ function editDeal(id) {
   document.getElementById('d-nome').value = d.nome || '';
   document.getElementById('d-email').value = d.email || '';
   document.getElementById('d-tel').value = d.tel || '';
+  document.getElementById('d-data-casamento').value = d.dataCasamento || '';
   document.getElementById('d-casamento').value = d.casamento || '';
   document.getElementById('d-entrega-loja').value = d.entregaLoja || '';
   document.getElementById('d-tipo').value = d.tipo || '';
@@ -1759,6 +1764,7 @@ function saveDealCore(silent = false) {
     id: editingDealId || Date.now().toString(),
     nome, email: document.getElementById('d-email').value,
     tel: document.getElementById('d-tel').value,
+    dataCasamento: document.getElementById('d-data-casamento').value,
     casamento: document.getElementById('d-casamento').value,
     entregaLoja: document.getElementById('d-entrega-loja').value,
     tipo: document.getElementById('d-tipo').value,
