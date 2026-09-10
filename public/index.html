@@ -498,7 +498,7 @@
         <div class="card-body">
           <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Repopular a aplicação com dados de exemplo para demonstração.</p>
           <button class="btn btn-outline" onclick="loadSampleData(); showToast('Dados de demonstração carregados!')">Carregar Dados Demo</button>
-          <button class="btn btn-danger btn-sm" style="margin-left:8px;" onclick="if(confirm('Apagar todos os dados?')){clearAllData();}">Limpar Tudo</button>
+          <button class="btn btn-danger btn-sm" style="margin-left:8px;" onclick="if(confirm('Apagar todos os dados (negócios, atividades, calendário)?')){clearWorkingData();}">Limpar Dados</button>
         </div>
       </div>
     </div>
@@ -864,6 +864,13 @@ function loadSampleData() {
 }
 
 function clearAllData() { DB = { deals: [], activities: [], leads: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } }; saveDB(); renderAll(); showToast('Dados limpos.'); }
+function clearWorkingData() {
+  const config = DB.config;
+  DB = { deals: [], activities: [], leads: [], config };
+  saveDB();
+  renderAll();
+  showToast('Negócios, atividades e calendário foram eliminados!');
+}
 
 // ===================== RENDER =====================
 function renderAll() {
