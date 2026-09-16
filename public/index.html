@@ -1388,11 +1388,11 @@ function renderCalendar() {
     });
   }
 
-  let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">';
-  ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d => html += `<div style="text-align:center;padding:8px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">${d}</div>`);
+  let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;">';
+  ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d => html += `<div style="text-align:center;padding:12px;font-size:13px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">${d}</div>`);
 
   const startDay = (firstDay + 0) % 7;
-  for (let i = 0; i < startDay; i++) html += '<div style="padding:8px;min-height:60px;"></div>';
+  for (let i = 0; i < startDay; i++) html += '<div style="padding:12px;min-height:100px;"></div>';
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
@@ -1400,14 +1400,14 @@ function renderCalendar() {
     const dayWeddings = weddings.filter(d => d.casamento === dateStr);
     const dayActs = activities.filter(a => a.data === dateStr);
     const temEventos = dayWeddings.length || dayActs.length;
-    html += `<div class="cal-day" onclick="openActivityForDate('${dateStr}')" style="position:relative;padding:6px;min-height:60px;background:${isToday?'#eff6ff':'var(--card)'};border-radius:8px;border:1px solid ${isToday?'var(--accent)':'var(--border)'};cursor:pointer;" title="Clica para adicionar atividade/evento neste dia">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:13px;font-weight:${isToday?'800':'500'};color:${isToday?'var(--accent)':'var(--text)'};">${day}</span>
-        <span class="cal-add" onclick="event.stopPropagation();openActivityForDate('${dateStr}')" title="Adicionar atividade/evento" style="font-size:15px;font-weight:700;color:#fff;background:var(--accent);width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;">+</span>
+    html += `<div class="cal-day" onclick="openActivityForDate('${dateStr}')" style="position:relative;padding:12px;min-height:100px;background:${isToday?'#eff6ff':'var(--card)'};border-radius:8px;border:2px solid ${isToday?'var(--accent)':'var(--border)'};cursor:pointer;" title="Clica para adicionar atividade/evento neste dia">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:16px;font-weight:${isToday?'800':'600'};color:${isToday?'var(--accent)':'var(--text)'};">${day}</span>
+        <span class="cal-add" onclick="event.stopPropagation();openActivityForDate('${dateStr}')" title="Adicionar atividade/evento" style="font-size:18px;font-weight:700;color:#fff;background:var(--accent);width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;">+</span>
       </div>
-      ${dayWeddings.map(d => `<div style="font-size:10px;background:#fce7f3;color:#be185d;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">💍${d.nome}</div>`).join('')}
-      ${dayActs.map(a => `<div onclick="event.stopPropagation();editActivityById('${a.id}')" title="${a.titulo}" style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;justify-content:space-between;gap:4px;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${a.titulo}</span><span style="flex-shrink:0;">${a.hora || ''}</span></div>`).join('')}
-      ${temEventos ? `<div class="cal-add-row" onclick="event.stopPropagation();openActivityForDate('${dateStr}')" style="font-size:10px;color:var(--accent);font-weight:600;margin-top:3px;cursor:pointer;">+ adicionar</div>` : ''}
+      ${dayWeddings.map(d => `<div style="font-size:11px;background:#fce7f3;color:#be185d;border-radius:4px;padding:2px 6px;margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">💍${d.nome}</div>`).join('')}
+      ${dayActs.map(a => `<div onclick="event.stopPropagation();editActivityById('${a.id}')" title="${a.titulo}" style="font-size:11px;background:#ede9fe;color:#7c3aed;border-radius:4px;padding:2px 6px;margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;justify-content:space-between;gap:4px;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${a.titulo}</span><span style="flex-shrink:0;">${a.hora || ''}</span></div>`).join('')}
+      ${temEventos ? `<div class="cal-add-row" onclick="event.stopPropagation();openActivityForDate('${dateStr}')" style="font-size:11px;color:var(--accent);font-weight:600;margin-top:4px;cursor:pointer;">+ adicionar</div>` : ''}
     </div>`;
   }
   html += '</div>';
