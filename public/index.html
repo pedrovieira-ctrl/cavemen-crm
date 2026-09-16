@@ -662,7 +662,6 @@
       </div>
       <div class="form-row">
         <div class="form-group"><label>Fatos de Coleção</label><input id="d-fatocolecao" type="text" placeholder="Nome da coleção..."></div>
-        <div class="form-group"><label>Forro Personalizado</label><input id="d-forro" type="text" placeholder="Descrição do forro..."></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Nº de Pedido de Fábrica</label><input id="d-pedidofabrica" type="text" placeholder="Ex: FAB-12345"></div>
@@ -1564,7 +1563,6 @@ function openDetail(id) {
       ${d.cor ? `<div class="detail-field"><span class="df-label">Cor</span><span class="df-value">${d.cor}</span></div>` : ''}
       ${d.tecido ? `<div class="detail-field"><span class="df-label">Tecido</span><span class="df-value">${d.tecido}</span></div>` : ''}
       ${d.fatocolecao ? `<div class="detail-field"><span class="df-label">Fatos de Coleção</span><span class="df-value">${d.fatocolecao}</span></div>` : ''}
-      ${d.forro ? `<div class="detail-field"><span class="df-label">Forro Personalizado</span><span class="df-value">${d.forro}</span></div>` : ''}
       ${d.forropedido ? `<div class="detail-field"><span class="df-label">Nº Pedido Forro</span><span class="df-value">${d.forropedido}</span></div>` : ''}
       ${d.botoespunho ? `<div class="detail-field"><span class="df-label">Botões de Punho</span><span class="df-value">${d.botoespunho}</span></div>` : ''}
       ${d.baixogola ? `<div class="detail-field"><span class="df-label">Baixo de Gola</span><span class="df-value">${d.baixogola}</span></div>` : ''}
@@ -1708,7 +1706,7 @@ function openNewDealModal(stage = 'contacto') {
   document.getElementById('d-save-status').textContent = '';
   editingDealId = null;
   document.getElementById('modal-deal-title').textContent = 'Novo Negócio';
-  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-forro','d-pedidofabrica','d-forropedido','d-botoespunho','d-baixogola','d-forropersonalizado','d-etapa-producao','d-data-casamento'].forEach(id => document.getElementById(id).value = '');
+  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-pedidofabrica','d-forropedido','d-botoespunho','d-baixogola','d-forropersonalizado','d-etapa-producao','d-data-casamento'].forEach(id => document.getElementById(id).value = '');
   ['d-valor','d-sinal'].forEach(id => document.getElementById(id).value = '');
   ['d-tipo','d-colete','d-prioridade'].forEach(id => document.getElementById(id).value = '');
   ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
@@ -1738,7 +1736,6 @@ function editDeal(id) {
   document.getElementById('d-cor').value = d.cor || '';
   document.getElementById('d-tecido').value = d.tecido || '';
   document.getElementById('d-fatocolecao').value = d.fatocolecao || '';
-  document.getElementById('d-forro').value = d.forro || '';
   document.getElementById('d-pedidofabrica').value = d.pedidofabrica || '';
   document.getElementById('d-forropedido').value = d.forropedido || '';
   document.getElementById('d-botoespunho').value = d.botoespunho || '';
@@ -1792,7 +1789,6 @@ function saveDealCore(silent = false) {
     cor: document.getElementById('d-cor').value,
     tecido: document.getElementById('d-tecido').value,
     fatocolecao: document.getElementById('d-fatocolecao').value,
-    forro: document.getElementById('d-forro').value,
     pedidofabrica: document.getElementById('d-pedidofabrica').value,
     forropedido: document.getElementById('d-forropedido').value,
     botoespunho: document.getElementById('d-botoespunho').value,
@@ -2042,7 +2038,6 @@ function generateDealPDF() {
     </table>
     <table class="info">
       ${row('Fatos de Coleção', v('d-fatocolecao'))}
-      ${row('Forro Personalizado', v('d-forro'))}
       ${row('Nº Pedido Fábrica', v('d-pedidofabrica'))}
       ${row('Nº Pedido Forro', v('d-forropedido'))}
       ${row('Botões de Punho', v('d-botoespunho'))}
