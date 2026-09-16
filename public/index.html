@@ -711,7 +711,9 @@
         📎 Anexar PDF
         <input type="file" accept=".pdf" id="d-pdf-upload" onchange="handlePDFUpload()" style="display:none;">
       </label>
-      <button class="btn btn-outline" id="d-pdf-download-btn" onclick="downloadPDF()" style="border-color:var(--accent);color:var(--accent);cursor:pointer;margin:0;display:none;">📥 Ver PDF</button>
+      <div id="d-pdf-list" style="display:none; margin-left:8px; flex:1;">
+        <div id="d-pdf-items" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      </div>
       <button class="btn btn-primary" onclick="saveDeal()">✓ Concluído</button>
     </div>
   </div>
@@ -1635,6 +1637,16 @@ function openDetail(id) {
 
     ${d.notas ? `<div class="detail-section"><h4>Notas</h4><p style="font-size:13px;color:var(--text-muted);line-height:1.6;">${d.notas}</p></div>` : ''}
 
+    ${d.pdfFiles && d.pdfFiles.length > 0 ? `
+    <div class="detail-section">
+      <h4>Documentos (${d.pdfFiles.length})</h4>
+      ${d.pdfFiles.map((pdf, idx) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+          <button class="btn btn-sm" style="margin:0;text-align:left;" onclick="downloadDetailPDF('${d.id}',${idx})" title="${pdf.name}">📄 ${pdf.name}</button>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
     <div class="detail-section">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <h4 style="margin-bottom:0;">Atividades (${dealActivities.length})</h4>
@@ -1663,6 +1675,17 @@ function openDetail(id) {
 function closeDetail() {
   document.getElementById('detail-panel').classList.remove('open');
   document.getElementById('panel-overlay').classList.remove('open');
+}
+
+function downloadDetailPDF(dealId, pdfIdx) {
+  const deal = DB.deals.find(d => d.id === dealId);
+  if (deal && deal.pdfFiles && deal.pdfFiles[pdfIdx]) {
+    const pdf = deal.pdfFiles[pdfIdx];
+    const link = document.createElement('a');
+    link.href = pdf.data;
+    link.download = pdf.name;
+    link.click();
+  }
 }
 
 function moveToNextStage(id) {
@@ -1694,7 +1717,7 @@ function openNewDealModal(stage = 'contacto') {
   document.getElementById('d-casamento').value = '';
   document.getElementById('d-entrega-loja').value = '';
   document.getElementById('modal-deal').classList.add('open');
-  updatePDFButtonVisibility();
+  updatePDFList();
 }
 
 function editDeal(id) {
@@ -1736,7 +1759,7 @@ function editDeal(id) {
   document.getElementById('d-origem').value = d.origem || 'Recomendação';
   document.getElementById('d-notas').value = d.notas || '';
   document.getElementById('modal-deal').classList.add('open');
-  updatePDFButtonVisibility();
+  updatePDFList();
 }
 
 let dealAutoSaveTimer = null;
@@ -1791,7 +1814,7 @@ function saveDealCore(silent = false) {
     const idx = DB.deals.findIndex(d => d.id === editingDealId);
     if (idx > -1) {
       const oldDeal = DB.deals[idx];
-      deal.pdfFile = oldDeal.pdfFile;
+      deal.pdfFiles = oldDeal.pdfFiles;
       DB.deals[idx] = deal;
     }
   } else {
@@ -1844,31 +1867,53 @@ function handlePDFUpload() {
     if (editingDealId) {
       const deal = DB.deals.find(d => d.id === editingDealId);
       if (deal) {
-        deal.pdfFile = pdfData;
+        if (!deal.pdfFiles) deal.pdfFiles = [];
+        deal.pdfFiles.push({ name: file.name, data: pdfData });
         saveDB();
         showToast('PDF anexado com sucesso!');
-        updatePDFButtonVisibility();
+        updatePDFList();
+        input.value = '';
       }
     }
   };
   reader.readAsDataURL(file);
 }
-function updatePDFButtonVisibility() {
+function updatePDFList() {
   const deal = DB.deals.find(d => d.id === editingDealId);
-  const btn = document.getElementById('d-pdf-download-btn');
-  if (deal && deal.pdfFile) {
-    btn.style.display = 'inline-block';
+  const listContainer = document.getElementById('d-pdf-list');
+  const itemsContainer = document.getElementById('d-pdf-items');
+
+  if (deal && deal.pdfFiles && deal.pdfFiles.length > 0) {
+    listContainer.style.display = 'block';
+    itemsContainer.innerHTML = deal.pdfFiles.map((pdf, idx) => `
+      <div style="display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:6px 12px; font-size:12px;">
+        <button class="btn btn-sm" style="padding:4px 8px; margin:0; cursor:pointer;" onclick="downloadPDFByIndex(${idx})" title="${pdf.name}">📥 ${pdf.name.substring(0, 20)}${pdf.name.length > 20 ? '...' : ''}</button>
+        <button class="btn btn-sm btn-danger" style="padding:4px 6px; margin:0; cursor:pointer;" onclick="removePDFByIndex(${idx})">✕</button>
+      </div>
+    `).join('');
   } else {
-    btn.style.display = 'none';
+    listContainer.style.display = 'none';
   }
 }
-function downloadPDF() {
+function downloadPDFByIndex(idx) {
   const deal = DB.deals.find(d => d.id === editingDealId);
-  if (deal && deal.pdfFile) {
+  if (deal && deal.pdfFiles && deal.pdfFiles[idx]) {
+    const pdf = deal.pdfFiles[idx];
     const link = document.createElement('a');
-    link.href = deal.pdfFile;
-    link.download = (deal.nome || 'documento') + '.pdf';
+    link.href = pdf.data;
+    link.download = pdf.name;
     link.click();
+  }
+}
+function removePDFByIndex(idx) {
+  const deal = DB.deals.find(d => d.id === editingDealId);
+  if (deal && deal.pdfFiles && idx >= 0 && idx < deal.pdfFiles.length) {
+    if (confirm(`Remover "${deal.pdfFiles[idx].name}"?`)) {
+      deal.pdfFiles.splice(idx, 1);
+      saveDB();
+      showToast('PDF removido!');
+      updatePDFList();
+    }
   }
 }
 
