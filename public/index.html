@@ -691,6 +691,18 @@
         <div class="form-group"><label>Baixo de Gola</label><input id="d-baixogola" type="text" placeholder="Ex: Veludo preto..."></div>
       </div>
 
+      <div class="form-section">Medidas & Tamanhos</div>
+      <div class="form-row">
+        <div class="form-group"><label>Peso</label><input id="d-peso" type="text" placeholder="Ex: 75 kg"></div>
+        <div class="form-group"><label>Altura</label><input id="d-altura" type="text" placeholder="Ex: 180 cm"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Blazer</label><input id="d-blazer" type="text" placeholder="Ex: 50"></div>
+        <div class="form-group"><label>Camisa</label><input id="d-camisa" type="text" placeholder="Ex: M"></div>
+        <div class="form-group"><label>Calças</label><input id="d-calcas" type="text" placeholder="Ex: 40"></div>
+        <div class="form-group"><label>Calçado</label><input id="d-calcado" type="text" placeholder="Ex: 42"></div>
+      </div>
+
       <div class="form-section">Acessórios</div>
       <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
         <label class="acess-check"><input type="checkbox" id="ac-gravata"> 👔 Gravata</label>
@@ -1576,6 +1588,17 @@ function openDetail(id) {
       </div>` : ''}
     </div>
 
+    ${(d.peso || d.altura || d.blazer || d.camisa || d.calcas || d.calcado) ? `
+    <div class="detail-section">
+      <h4>Medidas & Tamanhos</h4>
+      ${d.peso ? `<div class="detail-field"><span class="df-label">Peso</span><span class="df-value">${d.peso}</span></div>` : ''}
+      ${d.altura ? `<div class="detail-field"><span class="df-label">Altura</span><span class="df-value">${d.altura}</span></div>` : ''}
+      ${d.blazer ? `<div class="detail-field"><span class="df-label">Blazer</span><span class="df-value">${d.blazer}</span></div>` : ''}
+      ${d.camisa ? `<div class="detail-field"><span class="df-label">Camisa</span><span class="df-value">${d.camisa}</span></div>` : ''}
+      ${d.calcas ? `<div class="detail-field"><span class="df-label">Calças</span><span class="df-value">${d.calcas}</span></div>` : ''}
+      ${d.calcado ? `<div class="detail-field"><span class="df-label">Calçado</span><span class="df-value">${d.calcado}</span></div>` : ''}
+    </div>` : ''}
+
     <div class="detail-section">
       <h4>Contacto</h4>
       <div class="detail-field"><span class="df-label">Telefone</span>${d.tel ? `<a href="tel:${d.tel}" style="color:var(--accent);font-weight:600;">${d.tel}</a>` : '<span class="df-value">-</span>'}</div>
@@ -1708,7 +1731,7 @@ function openNewDealModal(stage = 'contacto') {
   document.getElementById('d-save-status').textContent = '';
   editingDealId = null;
   document.getElementById('modal-deal-title').textContent = 'Novo Negócio';
-  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-pedidofabrica','d-forropedido','d-botoespunho','d-baixogola','d-forropersonalizado','d-etapa-producao','d-casamento','d-levantamento','d-comercial'].forEach(id => document.getElementById(id).value = '');
+  ['d-nome','d-email','d-tel','d-cor','d-tecido','d-notas','d-fatocolecao','d-pedidofabrica','d-forropedido','d-botoespunho','d-baixogola','d-forropersonalizado','d-etapa-producao','d-casamento','d-levantamento','d-comercial','d-peso','d-altura','d-blazer','d-camisa','d-calcas','d-calcado'].forEach(id => document.getElementById(id).value = '');
   ['d-valor','d-sinal'].forEach(id => document.getElementById(id).value = '');
   ['d-tipo','d-colete','d-prioridade'].forEach(id => document.getElementById(id).value = '');
   ['ac-gravata','ac-sapatos','ac-camisa','ac-meias','ac-cinto'].forEach(id => document.getElementById(id).checked = false);
@@ -1746,6 +1769,12 @@ function editDeal(id) {
   document.getElementById('d-baixogola').value = d.baixogola || '';
   document.getElementById('d-forropersonalizado').value = d.forropersonalizado || '';
   document.getElementById('d-etapa-producao').value = d.etapaproducao || '';
+  document.getElementById('d-peso').value = d.peso || '';
+  document.getElementById('d-altura').value = d.altura || '';
+  document.getElementById('d-blazer').value = d.blazer || '';
+  document.getElementById('d-camisa').value = d.camisa || '';
+  document.getElementById('d-calcas').value = d.calcas || '';
+  document.getElementById('d-calcado').value = d.calcado || '';
   const ac = d.acessorios || [];
   document.getElementById('ac-gravata').checked = ac.includes('Gravata');
   document.getElementById('ac-sapatos').checked = ac.includes('Sapatos');
@@ -1800,6 +1829,12 @@ function saveDealCore(silent = false) {
     baixogola: document.getElementById('d-baixogola').value,
     forropersonalizado: document.getElementById('d-forropersonalizado').value,
     etapaproducao: document.getElementById('d-etapa-producao').value,
+    peso: document.getElementById('d-peso').value,
+    altura: document.getElementById('d-altura').value,
+    blazer: document.getElementById('d-blazer').value,
+    camisa: document.getElementById('d-camisa').value,
+    calcas: document.getElementById('d-calcas').value,
+    calcado: document.getElementById('d-calcado').value,
     acessorios: ['Gravata','Sapatos','Camisa','Meias','Cinto'].filter(a => document.getElementById('ac-'+a.toLowerCase()).checked),
     valor: parseFloat(document.getElementById('d-valor').value) || 0,
     sinal: parseFloat(document.getElementById('d-sinal').value) || 0,
