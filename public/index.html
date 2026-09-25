@@ -1037,6 +1037,18 @@ function deleteLead(id) {
   showToast('Lead eliminada.');
 }
 
+function recoverLead(id) {
+  const leadsRecuperacao = {
+    'l1': { id: 'l1', nome: 'Filipe Marques', tel: '920 111 222', email: 'filipe.m@gmail.com', casamento: future(180), loja: 'Guimarães', origem: 'Instagram', estado: 'novo', notas: 'Viu o perfil no Instagram, interesse em fato slim', criado: future(-1), atualizado: future(-1) },
+    'l2': { id: 'l2', nome: 'Rui Tavares', tel: '921 222 333', email: '', casamento: future(240), loja: 'Braga', origem: 'Recomendação', estado: 'contactado', notas: 'Recomendado pelo irmão, casamento em Braga', criado: future(-3), atualizado: future(-2) }
+  };
+  if (leadsRecuperacao[id] && !DB.leads.find(l => l.id === id)) {
+    DB.leads.push(leadsRecuperacao[id]);
+    saveDB(); renderAll();
+    showToast(`Lead ${leadsRecuperacao[id].nome} recuperada!`);
+  }
+}
+
 function changeLeadEstado(id, estado) {
   if (!estado) return;
   const lead = DB.leads.find(l => l.id === id);
