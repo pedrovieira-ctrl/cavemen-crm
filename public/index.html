@@ -40,6 +40,7 @@
   .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
   .nav-item.active { background: var(--sidebar-active); color: #fff; }
   .nav-item .nav-icon { width: 18px; text-align: center; font-size: 15px; }
+  .nav-item .nav-badge:empty { display: none; }
   .nav-item .nav-badge { margin-left: auto; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 6px; }
   .sidebar-bottom { margin-top: auto; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07); }
 
@@ -118,6 +119,8 @@
   th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: #fafafa; border-bottom: 1px solid var(--border); white-space: nowrap; }
   td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
   tr:last-child td { border-bottom: none; }
+  #view-relatorios th { white-space: normal; padding: 11px 12px; }
+  #view-relatorios td { padding: 11px 12px; }
   tr:hover td { background: #fafeff; }
   .client-name-cell { display: flex; align-items: center; gap: 10px; }
   .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -259,11 +262,13 @@
     <div class="nav-item" data-view="leads"><span class="nav-icon">🎯</span> Leads <span class="nav-badge" id="badge-leads">0</span></div>
     <div class="nav-item" data-view="pipeline"><span class="nav-icon">🔄</span> Pipeline</div>
     <div class="nav-item" data-view="clientes"><span class="nav-icon">👥</span> Clientes</div>
+    <div class="nav-item" data-view="fechados"><span class="nav-icon">🏁</span> Ganhos & Perdidos</div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Gestão</div>
     <div class="nav-item" data-view="atividades"><span class="nav-icon">✅</span> Atividades <span class="nav-badge" id="badge-ativ">0</span></div>
     <div class="nav-item" data-view="calendario"><span class="nav-icon">📅</span> Calendário</div>
+    <div class="nav-item" data-view="casamentos"><span class="nav-icon">💍</span> Casamentos <span class="nav-badge" id="badge-casamentos"></span></div>
     <div class="nav-item" data-view="relatorios"><span class="nav-icon">📈</span> Relatórios</div>
   </div>
   <div class="sidebar-bottom">
@@ -450,28 +455,106 @@
           <div id="calendar-grid"></div>
         </div>
       </div>
-      <div style="margin-top:16px;" class="card">
-        <div class="card-header"><h3>Casamentos do Mês</h3></div>
-        <div class="card-body" id="cal-weddings-list"></div>
+    </div>
+
+    <!-- GANHOS & PERDIDOS -->
+    <div id="view-fechados" class="view">
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+        <button class="loja-filter-btn active" data-loja="" onclick="setFechadosLoja(this)">🏪 Todas as Lojas</button>
+        <button class="loja-filter-btn" data-loja="Guimarães" onclick="setFechadosLoja(this)">📍 Guimarães</button>
+        <button class="loja-filter-btn" data-loja="Braga" onclick="setFechadosLoja(this)">📍 Braga</button>
+        <button class="loja-filter-btn" data-loja="Porto" onclick="setFechadosLoja(this)">📍 Porto</button>
+      </div>
+      <div class="stats-grid" id="fechados-stats"></div>
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <div class="filter-chip active" data-estado="" onclick="setFechadosEstado(this)">Todos</div>
+        <div class="filter-chip" data-estado="ganho" onclick="setFechadosEstado(this)">🏆 Ganhos</div>
+        <div class="filter-chip" data-estado="perdido" onclick="setFechadosEstado(this)">✗ Perdidos</div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Noivo</th><th>Loja</th><th>Origem</th><th>Comercial</th><th>Valor</th><th>Resultado</th><th>Fechado em</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="fechados-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CASAMENTOS -->
+    <div id="view-casamentos" class="view">
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+        <button class="loja-filter-btn active" data-loja="" onclick="setCasamentosLoja(this)">🏪 Todas as Lojas</button>
+        <button class="loja-filter-btn" data-loja="Guimarães" onclick="setCasamentosLoja(this)">📍 Guimarães</button>
+        <button class="loja-filter-btn" data-loja="Braga" onclick="setCasamentosLoja(this)">📍 Braga</button>
+        <button class="loja-filter-btn" data-loja="Porto" onclick="setCasamentosLoja(this)">📍 Porto</button>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;" id="casamentos-chips"></div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Noivo</th><th>Telefone</th><th>Loja</th><th>Comercial</th><th>Casamento</th><th>Quando</th><th>Mensagem pós-casamento</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="casamentos-tbody"></tbody>
+        </table>
       </div>
     </div>
 
     <!-- RELATÓRIOS -->
     <div id="view-relatorios" class="view">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <div class="filter-chip" data-periodo="mes" onclick="setRelPeriodo(this)">Este mês</div>
+          <div class="filter-chip" data-periodo="3m" onclick="setRelPeriodo(this)">Últimos 3 meses</div>
+          <div class="filter-chip" data-periodo="ano" onclick="setRelPeriodo(this)">Este ano</div>
+          <div class="filter-chip active" data-periodo="tudo" onclick="setRelPeriodo(this)">Desde sempre</div>
+        </div>
+        <select id="rel-loja" onchange="renderRelatorios()" style="border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; background:var(--card);">
+          <option value="">🏪 Todas as lojas</option>
+          <option value="Guimarães">📍 Guimarães</option>
+          <option value="Braga">📍 Braga</option>
+          <option value="Porto">📍 Porto</option>
+        </select>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Contacto = lead ou negócio. O período filtra pela data em que o contacto entrou no CRM.</p>
+
       <div class="stats-grid" id="relatorios-stats"></div>
-      <div class="dashboard-grid">
+
+      <div class="table-container">
+        <div class="table-toolbar"><h3 style="font-size:15px;">Contactos por Origem</h3></div>
+        <div style="overflow-x:auto;"><table id="rel-origem-table"></table></div>
+      </div>
+
+      <div style="margin-top:16px; grid-template-columns:1fr 1fr;" class="dashboard-grid">
         <div class="card">
-          <div class="card-header"><h3>Receita por Tipo de Fato</h3></div>
-          <div class="card-body"><canvas id="chart-tipos" height="160"></canvas></div>
+          <div class="card-header"><h3>Resultado por Origem</h3></div>
+          <div class="card-body"><canvas id="chart-origem" height="200"></canvas></div>
         </div>
         <div class="card">
-          <div class="card-header"><h3>Taxa de Conversão por Etapa</h3></div>
-          <div class="card-body"><canvas id="chart-conversion" height="160"></canvas></div>
+          <div class="card-header"><h3>Novos Contactos por Mês</h3></div>
+          <div class="card-body"><canvas id="chart-meses" height="200"></canvas></div>
         </div>
       </div>
-      <div style="margin-top:16px;" class="card">
-        <div class="card-header"><h3>Origem dos Leads</h3></div>
-        <div class="card-body"><canvas id="chart-origem" height="100"></canvas></div>
+
+      <div style="margin-top:16px;" class="table-container">
+        <div class="table-toolbar"><h3 style="font-size:15px;">Por Loja</h3></div>
+        <div style="overflow-x:auto;"><table id="rel-loja-table"></table></div>
+      </div>
+
+      <div style="margin-top:16px;" class="table-container">
+        <div class="table-toolbar"><h3 style="font-size:15px;">Por Comercial</h3></div>
+        <div style="overflow-x:auto;"><table id="rel-comercial-table"></table></div>
+      </div>
+
+      <div style="margin-top:16px; grid-template-columns:1fr 1fr;" class="dashboard-grid">
+        <div class="card">
+          <div class="card-header"><h3>Receita por Tipo de Fato</h3></div>
+          <div class="card-body"><div style="position:relative;height:280px;"><canvas id="chart-tipos"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Negócios em Curso por Etapa</h3></div>
+          <div class="card-body"><div style="position:relative;height:280px;"><canvas id="chart-conversion"></canvas></div></div>
+        </div>
       </div>
     </div>
 
@@ -820,7 +903,12 @@ let calCurrentDate = new Date();
 let activityFilter = 'pendente';
 let activeLojaFilterAtiv = '';
 let activeLojaFilterCal = '';
-let chartRevenue = null, chartPipeline = null, chartTipos = null, chartConversion = null, chartOrigem = null;
+let chartRevenue = null, chartPipeline = null, chartTipos = null, chartConversion = null, chartOrigem = null, chartMeses = null;
+let relPeriodo = 'tudo';
+let fechadosEstado = '';
+let fechadosLoja = '';
+let casamentosFiltro = 'contactar';
+let casamentosLoja = '';
 
 async function loadDB() {
   try {
@@ -899,14 +987,17 @@ function renderView(view) {
   else if (view === 'pipeline') renderPipeline();
   else if (view === 'negocios') renderNegocios();
   else if (view === 'clientes') renderClientes();
+  else if (view === 'fechados') renderFechados();
   else if (view === 'atividades') renderAtividades();
   else if (view === 'calendario') renderCalendar();
+  else if (view === 'casamentos') renderCasamentos();
   else if (view === 'relatorios') renderRelatorios();
 }
 
 function updateBadge() {
   const pending = DB.activities.filter(a => !a.concluida).length;
   document.getElementById('badge-ativ').textContent = pending;
+  document.getElementById('badge-casamentos').textContent = casamentosPorContactar().length || '';
   const newLeads = (DB.leads || []).filter(l => l.estado === 'novo' || l.estado === 'contactado').length;
   document.getElementById('badge-leads').textContent = newLeads || '';
 }
@@ -1038,6 +1129,7 @@ function deleteLead(id) {
 }
 
 function recoverLead(id) {
+  const future = (days) => { const d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0]; };
   const leadsRecuperacao = {
     'l1': { id: 'l1', nome: 'Filipe Marques', tel: '920 111 222', email: 'filipe.m@gmail.com', casamento: future(180), loja: 'Guimarães', origem: 'Instagram', estado: 'novo', notas: 'Viu o perfil no Instagram, interesse em fato slim', criado: future(-1), atualizado: future(-1) },
     'l2': { id: 'l2', nome: 'Rui Tavares', tel: '921 222 333', email: '', casamento: future(240), loja: 'Braga', origem: 'Recomendação', estado: 'contactado', notas: 'Recomendado pelo irmão, casamento em Braga', criado: future(-3), atualizado: future(-2) }
@@ -1181,7 +1273,7 @@ function renderChartPipeline() {
 
 // ===================== PIPELINE =====================
 function setLojaFilter(btn) {
-  document.querySelectorAll('.loja-filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#view-pipeline .loja-filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   activeLojaFilter = btn.dataset.loja;
   renderPipeline();
@@ -1386,7 +1478,7 @@ function setLojaFilterAtiv(btn) {
 }
 
 function filterActivities(el) {
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#view-atividades .filter-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   activityFilter = el.dataset.filter;
   renderAtividades();
@@ -1436,19 +1528,6 @@ function renderCalendar() {
   }
   html += '</div>';
   document.getElementById('calendar-grid').innerHTML = html;
-
-  document.getElementById('cal-weddings-list').innerHTML = weddings.length ? weddings.map(d => `
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
-      <div style="font-size:24px;">💍</div>
-      <div style="flex:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <div style="font-weight:700;">${d.nome}</div>
-          <div style="font-weight:600;color:var(--accent);">${formatDate(d.casamento)}</div>
-        </div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${d.tipo||''} ${d.cor?'· '+d.cor:''}</div>
-      </div>
-      <div style="font-weight:800;color:var(--accent);">€${(d.valor||0).toLocaleString('pt')}</div>
-    </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px;">Sem casamentos este mês.</p>';
 }
 function calPrev() { calCurrentDate.setMonth(calCurrentDate.getMonth()-1); renderCalendar(); }
 function calNext() { calCurrentDate.setMonth(calCurrentDate.getMonth()+1); renderCalendar(); }
@@ -1459,52 +1538,299 @@ function setLojaFilterCal(btn) {
   renderCalendar();
 }
 
-// ===================== RELATÓRIOS =====================
-function renderRelatorios() {
-  const total = DB.deals.reduce((s,d) => s+(d.valor||0), 0);
-  const ganhos = DB.deals.filter(d => d.estado === 'ganho');
-  const receitaGanha = ganhos.reduce((s,d) => s+(d.valor||0), 0);
-  const fechados = DB.deals.filter(d => d.estado).length;
-  const taxaConv = fechados ? Math.round(ganhos.length/fechados*100) : 0;
-  const ticketMedio = DB.deals.length ? Math.round(total/DB.deals.length) : 0;
+// ===================== GANHOS & PERDIDOS =====================
+function escHtml(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function setFechadosLoja(btn) {
+  document.querySelectorAll('#view-fechados .loja-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  fechadosLoja = btn.dataset.loja;
+  renderFechados();
+}
+function setFechadosEstado(el) {
+  document.querySelectorAll('#view-fechados .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  fechadosEstado = el.dataset.estado;
+  renderFechados();
+}
+function renderFechados() {
+  let deals = DB.deals.filter(d => d.estado);
+  if (fechadosLoja) deals = deals.filter(d => d.loja === fechadosLoja);
+  const ganhos = deals.filter(d => d.estado === 'ganho');
+  const perdidos = deals.filter(d => d.estado === 'perdido');
+  const soma = arr => arr.reduce((s, d) => s + (d.valor || 0), 0);
+  const eur = n => '€' + Math.round(n).toLocaleString('pt');
 
-  document.getElementById('relatorios-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Receita Total</div><div class="stat-value">€${total.toLocaleString('pt')}</div></div>
-    <div class="stat-card"><div class="stat-label">🏆 Receita Ganha</div><div class="stat-value" style="color:var(--success);">€${receitaGanha.toLocaleString('pt')}</div><div class="stat-change">${ganhos.length} negócios ganhos</div></div>
-    <div class="stat-card"><div class="stat-label">Taxa de Conversão</div><div class="stat-value">${taxaConv}%</div><div class="stat-change">dos negócios fechados</div></div>
-    <div class="stat-card"><div class="stat-label">Ticket Médio</div><div class="stat-value">€${ticketMedio.toLocaleString('pt')}</div></div>
+  document.getElementById('fechados-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">🏆 Ganhos</div><div class="stat-value" style="color:var(--success);">${ganhos.length}</div><div class="stat-change">${eur(soma(ganhos))} de receita</div></div>
+    <div class="stat-card"><div class="stat-label">✗ Perdidos</div><div class="stat-value" style="color:var(--danger);">${perdidos.length}</div><div class="stat-change" style="color:var(--text-muted);">${eur(soma(perdidos))} em valor perdido</div></div>
+    <div class="stat-card"><div class="stat-label">Taxa de Fecho</div><div class="stat-value">${deals.length ? Math.round(ganhos.length / deals.length * 100) + '%' : '—'}</div><div class="stat-change" style="color:var(--text-muted);">ganhos ÷ (ganhos + perdidos)</div></div>
+    <div class="stat-card"><div class="stat-label">Ticket Médio Ganho</div><div class="stat-value">${ganhos.length ? eur(soma(ganhos) / ganhos.length) : '—'}</div></div>
   `;
 
-  // Tipos chart
-  const tipos = {};
-  DB.deals.forEach(d => { if (d.tipo) tipos[d.tipo] = (tipos[d.tipo]||0) + (d.valor||0); });
-  const ctx1 = document.getElementById('chart-tipos').getContext('2d');
-  if (chartTipos) chartTipos.destroy();
-  chartTipos = new Chart(ctx1, {
-    type: 'doughnut',
-    data: { labels: Object.keys(tipos), datasets: [{ data: Object.values(tipos), backgroundColor: ['#6366f1','#10b981','#f59e0b','#ef4444','#3b82f6'], borderWidth: 0 }] },
-    options: { responsive: true, plugins: { legend: { position: 'right' } } }
+  const lista = (fechadosEstado ? deals.filter(d => d.estado === fechadosEstado) : deals)
+    .sort((a, b) => (a.fechado || '') < (b.fechado || '') ? 1 : -1);
+
+  document.getElementById('fechados-tbody').innerHTML = lista.length ? lista.map(d => `
+    <tr onclick="openDetail('${d.id}')" style="cursor:pointer;">
+      <td><div class="client-name-cell">
+        <div class="avatar">${escHtml((d.nome || '?')[0])}</div>
+        <div class="client-info"><div class="name">${escHtml(d.nome)}</div><div class="sub">${escHtml(d.tel || '')}</div></div>
+      </div></td>
+      <td>${escHtml(d.loja || '-')}</td>
+      <td>${escHtml(d.origem || '-')}</td>
+      <td>${escHtml(d.comercial || '-')}</td>
+      <td><strong>${eur(d.valor || 0)}</strong></td>
+      <td>${d.estado === 'ganho' ? '<span class="stage-badge" style="background:#d1fae5;color:#065f46;">🏆 Ganho</span>' : '<span class="stage-badge" style="background:#fee2e2;color:#991b1b;">✗ Perdido</span>'}</td>
+      <td>${d.fechado ? formatDate(d.fechado) : '-'}</td>
+      <td onclick="event.stopPropagation();"><button class="btn btn-outline btn-sm" onclick="reopenDeal('${d.id}')">↩️ Reabrir</button></td>
+    </tr>`).join('') : `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏁</div><p>Ainda não há negócios ${fechadosEstado === 'ganho' ? 'ganhos' : fechadosEstado === 'perdido' ? 'perdidos' : 'ganhos ou perdidos'}.<br>Abre um negócio no Pipeline e marca-o como 🏆 Ganho ou ✗ Perdido.</p></div></td></tr>`;
+}
+
+// ===================== CASAMENTOS =====================
+function hojeISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+// Clientes com data de casamento (negócios perdidos não contam)
+function casamentosClientes() {
+  return DB.deals.filter(d => d.casamento && d.estado !== 'perdido');
+}
+function casamentosPorContactar() {
+  const hoje = hojeISO();
+  return casamentosClientes().filter(d => d.casamento < hoje && !d.posCasamento);
+}
+function setCasamentosLoja(btn) {
+  document.querySelectorAll('#view-casamentos .loja-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  casamentosLoja = btn.dataset.loja;
+  renderCasamentos();
+}
+function setCasamentosFiltro(f) {
+  casamentosFiltro = f;
+  renderCasamentos();
+}
+function togglePosCasamento(id) {
+  const d = DB.deals.find(x => x.id === id);
+  if (!d) return;
+  if (d.posCasamento) delete d.posCasamento;
+  else d.posCasamento = hojeISO();
+  saveDB();
+  renderAll();
+  showToast(d.posCasamento ? `Mensagem marcada como enviada: ${d.nome}` : `Marcação removida: ${d.nome}`);
+}
+function whatsappPosCasamento(d) {
+  let num = (d.tel || '').replace(/\D/g, '');
+  if (!num) return '';
+  if (num.length === 9) num = '351' + num;
+  const nome = (d.nome || '').trim().split(/\s+/)[0];
+  const msg = `Olá ${nome}! Aqui é da Cavemen 🙂 Parabéns pelo casamento! Gostávamos muito de saber como correu o grande dia e como foi a experiência com o seu fato Cavemen.`;
+  return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+}
+function renderCasamentos() {
+  const hoje = hojeISO();
+  let todos = casamentosClientes();
+  if (casamentosLoja) todos = todos.filter(d => d.loja === casamentosLoja);
+  const grupos = {
+    contactar:   todos.filter(d => d.casamento < hoje && !d.posCasamento),
+    proximos:    todos.filter(d => d.casamento >= hoje),
+    contactados: todos.filter(d => d.posCasamento),
+    todos,
+  };
+  const chips = [['contactar', '💬 Por contactar'], ['proximos', '📅 Próximos casamentos'], ['contactados', '✓ Já contactados'], ['todos', 'Todos']];
+  document.getElementById('casamentos-chips').innerHTML = chips.map(([f, label]) =>
+    `<div class="filter-chip ${casamentosFiltro === f ? 'active' : ''}" onclick="setCasamentosFiltro('${f}')">${label} (${grupos[f].length})</div>`).join('');
+
+  // próximos: o mais próximo primeiro; restantes: o casamento mais recente primeiro
+  const lista = [...grupos[casamentosFiltro]].sort((a, b) =>
+    casamentosFiltro === 'proximos' ? a.casamento.localeCompare(b.casamento) : b.casamento.localeCompare(a.casamento));
+
+  const dias = iso => Math.round((new Date(iso + 'T00:00:00') - new Date(hoje + 'T00:00:00')) / 86400000);
+  const quando = n => n === 0 ? '<strong style="color:var(--accent);">Hoje 🎉</strong>'
+    : n > 0 ? `daqui a ${n} dia${n === 1 ? '' : 's'}`
+    : `há ${-n} dia${n === -1 ? '' : 's'}`;
+  const vazio = { contactar: 'Não há clientes por contactar. 🎉', proximos: 'Não há casamentos marcados.', contactados: 'Ainda não marcaste nenhuma mensagem como enviada.', todos: 'Nenhum cliente com data de casamento preenchida.' };
+
+  document.getElementById('casamentos-tbody').innerHTML = lista.length ? lista.map(d => {
+    const n = dias(d.casamento);
+    const wa = whatsappPosCasamento(d);
+    const estado = d.posCasamento
+      ? `<span class="stage-badge" style="background:#d1fae5;color:#065f46;">✓ Enviada a ${formatDate(d.posCasamento)}</span>`
+      : n < 0 ? '<span class="stage-badge" style="background:#fef3c7;color:#92400e;">Por enviar</span>'
+      : '<span style="color:var(--text-muted);">Ainda não casou</span>';
+    return `<tr onclick="openDetail('${d.id}')" style="cursor:pointer;">
+      <td><div class="client-name-cell">
+        <div class="avatar">${escHtml((d.nome || '?')[0])}</div>
+        <div class="client-info"><div class="name">${escHtml(d.nome)}</div><div class="sub">${escHtml(d.tipo || '')}</div></div>
+      </div></td>
+      <td>${d.tel ? `<a href="tel:${escHtml(d.tel)}" onclick="event.stopPropagation()" style="color:var(--text);">${escHtml(d.tel)}</a>` : '-'}</td>
+      <td>${escHtml(d.loja || '-')}</td>
+      <td>${escHtml(d.comercial || '-')}</td>
+      <td><strong>${formatDate(d.casamento)}</strong></td>
+      <td>${quando(n)}</td>
+      <td>${estado}</td>
+      <td onclick="event.stopPropagation();" style="white-space:nowrap;">
+        ${wa && n < 0 ? `<a class="btn btn-sm" href="${wa}" target="_blank" rel="noopener" style="background:#25d366;color:#fff;text-decoration:none;">💬 WhatsApp</a>` : ''}
+        ${n < 0 || d.posCasamento ? `<button class="btn btn-outline btn-sm" onclick="togglePosCasamento('${d.id}')">${d.posCasamento ? '↩️ Desmarcar' : '✓ Marcar enviada'}</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💍</div><p>${vazio[casamentosFiltro]}</p></div></td></tr>`;
+}
+
+// ===================== RELATÓRIOS =====================
+function setRelPeriodo(el) {
+  document.querySelectorAll('#view-relatorios .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  relPeriodo = el.dataset.periodo;
+  renderRelatorios();
+}
+
+function relInicioPeriodo() {
+  const hoje = new Date();
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  if (relPeriodo === 'mes') return iso(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+  if (relPeriodo === '3m') return iso(new Date(hoje.getFullYear(), hoje.getMonth() - 3, hoje.getDate()));
+  if (relPeriodo === 'ano') return iso(new Date(hoje.getFullYear(), 0, 1));
+  return '';
+}
+
+// Agrupa leads + negócios por uma chave (origem, loja, comercial...)
+function relAgrupar(leads, deals, chave) {
+  const mapa = {};
+  const linha = k => mapa[k] || (mapa[k] = { chave: k, contactos: 0, leads: 0, naoQualif: 0, curso: 0, ganhos: 0, perdidos: 0, receita: 0 });
+  leads.forEach(l => {
+    const r = linha(chave(l));
+    r.contactos++;
+    if (l.estado === 'nao_qualificado') r.naoQualif++; else r.leads++;
+  });
+  deals.forEach(d => {
+    const r = linha(chave(d));
+    r.contactos++;
+    if (d.estado === 'ganho') { r.ganhos++; r.receita += d.valor || 0; }
+    else if (d.estado === 'perdido') r.perdidos++;
+    else r.curso++;
+  });
+  return Object.values(mapa).sort((a, b) => b.contactos - a.contactos || a.chave.localeCompare(b.chave));
+}
+
+function relTabela(linhas, titulo, comLeads) {
+  if (!linhas.length) return `<tr><td><div class="empty-state" style="padding:30px 20px;"><p style="margin:0;">Sem dados neste período.</p></div></td></tr>`;
+  const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
+  const eur = n => '€' + Math.round(n).toLocaleString('pt');
+  const campos = ['contactos', 'leads', 'naoQualif', 'curso', 'ganhos', 'perdidos', 'receita'];
+  const total = { chave: 'Total' };
+  campos.forEach(c => total[c] = linhas.reduce((s, r) => s + r[c], 0));
+  const num = 'style="text-align:right;"';
+  const tr = (r, forte) => `<tr${forte ? ' style="font-weight:700;background:#fafafa;"' : ''}>
+      <td>${forte ? r.chave : `<strong>${escHtml(r.chave)}</strong>`}</td>
+      <td ${num}>${r.contactos}</td>
+      <td ${num}>${pct(r.contactos, total.contactos)}</td>
+      ${comLeads ? `<td ${num}>${r.leads}</td><td ${num}>${r.naoQualif}</td>` : ''}
+      <td ${num}>${r.curso}</td>
+      <td style="text-align:right;color:var(--success);font-weight:700;">${r.ganhos}</td>
+      <td style="text-align:right;color:var(--danger);">${r.perdidos}</td>
+      <td ${num}>${pct(r.ganhos, r.contactos)}</td>
+      <td ${num}>${eur(r.receita)}</td>
+    </tr>`;
+  return `<thead><tr>
+      <th>${titulo}</th>
+      <th ${num}>${comLeads ? 'Contactos' : 'Negócios'}</th>
+      <th ${num}>% do total</th>
+      ${comLeads ? `<th ${num} title="Leads novas, contactadas ou qualificadas que ainda não viraram negócio">Leads por converter</th><th ${num}>Leads não qualif.</th>` : ''}
+      <th ${num}>Em curso</th>
+      <th ${num}>Ganhos</th>
+      <th ${num}>Perdidos</th>
+      <th ${num} title="Ganhos ÷ ${comLeads ? 'contactos' : 'negócios'}">Conversão</th>
+      <th ${num}>Receita ganha</th>
+    </tr></thead>
+    <tbody>${linhas.map(r => tr(r, false)).join('')}${linhas.length > 1 ? tr(total, true) : ''}</tbody>`;
+}
+
+function renderRelatorios() {
+  const inicio = relInicioPeriodo();
+  const loja = document.getElementById('rel-loja').value;
+  const noFiltro = x => (!inicio || (x.criado || '') >= inicio) && (!loja || x.loja === loja);
+  const leads = (DB.leads || []).filter(noFiltro);
+  const deals = DB.deals.filter(noFiltro);
+
+  const ganhos = deals.filter(d => d.estado === 'ganho');
+  const perdidos = deals.filter(d => d.estado === 'perdido');
+  const emCurso = deals.filter(d => !d.estado);
+  const leadsAbertas = leads.filter(l => l.estado !== 'nao_qualificado');
+  const soma = arr => arr.reduce((s, d) => s + (d.valor || 0), 0);
+  const eur = n => '€' + Math.round(n).toLocaleString('pt');
+  const contactos = leads.length + deals.length;
+  const fechados = ganhos.length + perdidos.length;
+  const muted = 'style="color:var(--text-muted);"';
+
+  document.getElementById('relatorios-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Contactos</div><div class="stat-value">${contactos}</div><div class="stat-change" ${muted}>${leads.length} leads · ${deals.length} negócios</div></div>
+    <div class="stat-card"><div class="stat-label">Leads por Converter</div><div class="stat-value">${leadsAbertas.length}</div><div class="stat-change" ${muted}>${leads.length - leadsAbertas.length} não qualificadas</div></div>
+    <div class="stat-card"><div class="stat-label">Negócios em Curso</div><div class="stat-value">${emCurso.length}</div><div class="stat-change" ${muted}>${eur(soma(emCurso))} em aberto</div></div>
+    <div class="stat-card"><div class="stat-label">Taxa de Fecho</div><div class="stat-value">${fechados ? Math.round(ganhos.length / fechados * 100) + '%' : '—'}</div><div class="stat-change" ${muted}>ganhos ÷ (ganhos + perdidos)</div></div>
+    <div class="stat-card"><div class="stat-label">🏆 Ganhos</div><div class="stat-value" style="color:var(--success);">${ganhos.length}</div><div class="stat-change" ${muted}>${contactos ? Math.round(ganhos.length / contactos * 100) : 0}% dos contactos</div></div>
+    <div class="stat-card"><div class="stat-label">✗ Perdidos</div><div class="stat-value" style="color:var(--danger);">${perdidos.length}</div><div class="stat-change" ${muted}>${eur(soma(perdidos))} em valor perdido</div></div>
+    <div class="stat-card"><div class="stat-label">Receita Ganha</div><div class="stat-value">${eur(soma(ganhos))}</div></div>
+    <div class="stat-card"><div class="stat-label">Ticket Médio Ganho</div><div class="stat-value">${ganhos.length ? eur(soma(ganhos) / ganhos.length) : '—'}</div></div>
+  `;
+
+  // Tabelas
+  const porOrigem = relAgrupar(leads, deals, x => x.origem || '(sem origem)');
+  document.getElementById('rel-origem-table').innerHTML = relTabela(porOrigem, 'Origem', true);
+  document.getElementById('rel-loja-table').innerHTML = relTabela(relAgrupar(leads, deals, x => x.loja || '(sem loja)'), 'Loja', true);
+  document.getElementById('rel-comercial-table').innerHTML = relTabela(relAgrupar([], deals, x => (x.comercial || '').trim() || '(sem comercial)'), 'Comercial', false);
+
+  // Séries comuns aos gráficos empilhados
+  const series = [
+    { campo: 'ganhos',    label: 'Ganhos',              cor: '#10b981' },
+    { campo: 'curso',     label: 'Em curso',            cor: '#6366f1' },
+    { campo: 'leads',     label: 'Leads por converter', cor: '#9ca3af' },
+    { campo: 'perdidos',  label: 'Perdidos',            cor: '#ef4444' },
+    { campo: 'naoQualif', label: 'Leads não qualif.',   cor: '#fca5a5' },
+  ];
+  const empilhado = (horizontal) => ({
+    indexAxis: horizontal ? 'y' : 'x',
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+    scales: { x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } }
   });
 
-  // Conversion
-  const ctx2 = document.getElementById('chart-conversion').getContext('2d');
-  const stageCounts = STAGES.map(s => DB.deals.filter(d => d.stage === s.id).length);
-  if (chartConversion) chartConversion.destroy();
-  chartConversion = new Chart(ctx2, {
-    type: 'bar',
-    data: { labels: STAGES.map(s => s.label), datasets: [{ data: stageCounts, backgroundColor: STAGES.map(s => s.color+'99'), borderColor: STAGES.map(s => s.color), borderWidth: 2, borderRadius: 4 }] },
-    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
-  });
-
-  // Origem
-  const origens = {};
-  DB.deals.forEach(d => { if (d.origem) origens[d.origem] = (origens[d.origem]||0) + 1; });
-  const ctx3 = document.getElementById('chart-origem').getContext('2d');
+  // Resultado por origem
   if (chartOrigem) chartOrigem.destroy();
-  chartOrigem = new Chart(ctx3, {
+  chartOrigem = new Chart(document.getElementById('chart-origem').getContext('2d'), {
     type: 'bar',
-    data: { labels: Object.keys(origens), datasets: [{ label: 'Leads', data: Object.values(origens), backgroundColor: '#818cf8', borderRadius: 6 }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    data: { labels: porOrigem.map(r => r.chave), datasets: series.map(s => ({ label: s.label, data: porOrigem.map(r => r[s.campo]), backgroundColor: s.cor, borderRadius: 3 })) },
+    options: empilhado(true)
+  });
+
+  // Novos contactos por mês (últimos 12 meses com dados)
+  const porMes = relAgrupar(leads.filter(l => l.criado), deals.filter(d => d.criado), x => x.criado.slice(0, 7))
+    .sort((a, b) => a.chave.localeCompare(b.chave)).slice(-12);
+  const nomeMes = k => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, 1).toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' });
+  if (chartMeses) chartMeses.destroy();
+  chartMeses = new Chart(document.getElementById('chart-meses').getContext('2d'), {
+    type: 'bar',
+    data: { labels: porMes.map(r => nomeMes(r.chave)), datasets: series.map(s => ({ label: s.label, data: porMes.map(r => r[s.campo]), backgroundColor: s.cor, borderRadius: 3 })) },
+    options: empilhado(false)
+  });
+
+  // Receita por tipo de fato (exclui negócios perdidos)
+  const tipos = {};
+  deals.filter(d => d.estado !== 'perdido').forEach(d => { if (d.tipo) tipos[d.tipo] = (tipos[d.tipo] || 0) + (d.valor || 0); });
+  if (chartTipos) chartTipos.destroy();
+  chartTipos = new Chart(document.getElementById('chart-tipos').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: Object.keys(tipos), datasets: [{ data: Object.values(tipos), backgroundColor: ['#6366f1','#10b981','#f59e0b','#ef4444','#3b82f6','#ec4899','#8b5cf6','#14b8a6','#84cc16'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Negócios em curso por etapa
+  if (chartConversion) chartConversion.destroy();
+  chartConversion = new Chart(document.getElementById('chart-conversion').getContext('2d'), {
+    type: 'bar',
+    data: { labels: STAGES.map(s => s.label), datasets: [{ data: STAGES.map(s => emCurso.filter(d => d.stage === s.id).length), backgroundColor: STAGES.map(s => s.color + '99'), borderColor: STAGES.map(s => s.color), borderWidth: 2, borderRadius: 4 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
   });
 }
 
@@ -1861,9 +2187,7 @@ function saveDealCore(silent = false) {
   if (!wasNew) {
     const idx = DB.deals.findIndex(d => d.id === editingDealId);
     if (idx > -1) {
-      const oldDeal = DB.deals[idx];
-      deal.pdfFiles = oldDeal.pdfFiles;
-      DB.deals[idx] = deal;
+      DB.deals[idx] = { ...DB.deals[idx], ...deal };
     }
   } else {
     DB.deals.push(deal);
@@ -2282,7 +2606,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(item => {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const el = document.getElementById('view-' + view);
     if (el) el.classList.add('active');
-    const titles = { dashboard:'Dashboard', pipeline:'Pipeline', negocios:'Negócios', clientes:'Clientes', atividades:'Atividades', calendario:'Calendário', relatorios:'Relatórios', configuracoes:'Definições' };
+    const titles = { dashboard:'Dashboard', leads:'Leads', fechados:'Ganhos & Perdidos', casamentos:'Casamentos', pipeline:'Pipeline', negocios:'Negócios', clientes:'Clientes', atividades:'Atividades', calendario:'Calendário', relatorios:'Relatórios', configuracoes:'Definições' };
     document.getElementById('page-title').textContent = titles[view] || view;
     closeDetail();
     renderView(view);
