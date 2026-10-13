@@ -89,7 +89,7 @@ app.post('/api/data', async (req, res) => {
 });
 
 // --- Formulário público "Agenda a tua visita" (página /noivos do site dos relatórios) ---
-const PUBLIC_ORIGINS = ['https://crm-clientes-site-1.onrender.com', 'http://localhost:5001', 'http://127.0.0.1:5001'];
+const PUBLIC_ORIGINS = ['https://encomendascavemen-cmd.github.io', 'https://crm-clientes-site-1.onrender.com', 'http://localhost:5001', 'http://127.0.0.1:5001'];
 app.use('/api/public', (req, res, next) => {
   const origin = req.headers.origin;
   if (PUBLIC_ORIGINS.includes(origin)) {
