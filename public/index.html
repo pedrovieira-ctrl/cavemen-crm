@@ -605,6 +605,9 @@
         <div class="form-group"><label>Data do Casamento</label><input id="l-casamento" type="date"></div>
       </div>
       <div class="form-row">
+        <div class="form-group"><label>Localidade</label><input id="l-localidade" type="text" placeholder="Ex: Famalicão"></div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label>Loja *</label>
           <select id="l-loja">
             <option value="Guimarães">📍 Guimarães</option>
@@ -1044,7 +1047,7 @@ function renderLeads() {
       </div></td>
       <td>${l.tel ? `<a href="tel:${l.tel}" style="color:var(--accent);">${l.tel}</a>` : '-'}${l.email ? `<br><span style="font-size:11px;color:var(--text-muted);">${l.email}</span>` : ''}</td>
       <td>${l.casamento ? `<div style="font-weight:600;">${formatDate(l.casamento)}</div><div class="${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}" style="font-size:11px;">${daysUntil}d</div>` : '-'}</td>
-      <td>${l.loja ? `<span class="loja-tag ${lojaClass}">${l.loja}</span>` : '-'}</td>
+      <td>${l.loja ? `<span class="loja-tag ${lojaClass}">${l.loja}</span>` : '-'}${leadLocalidade(l) ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${escHtml(leadLocalidade(l))}</div>` : ''}</td>
       <td><span style="font-size:12px;">${l.origem||'-'}</span></td>
       <td><span class="stage-badge" style="background:${est.bg};color:${est.color};">${est.label}</span></td>
       <td style="font-size:12px;color:var(--text-muted);">${formatDate(l.criado)}</td>
@@ -1066,10 +1069,17 @@ function renderLeads() {
   }).join('') : `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🎯</div><p>Sem leads. Clica em "+ Nova Lead" para começar.</p></div></td></tr>`;
 }
 
+// Pedidos antigos do site só têm a localidade escrita nas notas
+function leadLocalidade(l) {
+  if (l.localidade) return l.localidade;
+  const m = (l.notas || '').match(/Localidade: (.+?)\.?$/m);
+  return m ? m[1] : '';
+}
+
 function openNewLeadModal() {
   editingLeadId = null;
   document.getElementById('modal-lead-title').textContent = 'Nova Lead';
-  ['l-nome','l-tel','l-email','l-notas'].forEach(id => document.getElementById(id).value = '');
+  ['l-nome','l-tel','l-email','l-notas','l-localidade'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('l-casamento').value = '';
   document.getElementById('l-loja').value = activeLojaFilterLeads || 'Guimarães';
   document.getElementById('l-origem').value = 'Recomendação';
@@ -1086,6 +1096,7 @@ function editLead(id) {
   document.getElementById('l-tel').value = l.tel || '';
   document.getElementById('l-email').value = l.email || '';
   document.getElementById('l-casamento').value = l.casamento || '';
+  document.getElementById('l-localidade').value = leadLocalidade(l);
   document.getElementById('l-loja').value = l.loja || 'Guimarães';
   document.getElementById('l-origem').value = l.origem || 'Recomendação';
   document.getElementById('l-estado').value = l.estado || 'novo';
@@ -1104,6 +1115,7 @@ function saveLead() {
     nome, tel,
     email: document.getElementById('l-email').value,
     casamento: document.getElementById('l-casamento').value,
+    localidade: document.getElementById('l-localidade').value.trim(),
     loja: document.getElementById('l-loja').value,
     origem: document.getElementById('l-origem').value,
     estado: document.getElementById('l-estado').value,
@@ -1113,7 +1125,7 @@ function saveLead() {
   };
   if (editingLeadId) {
     const idx = DB.leads.findIndex(l => l.id === editingLeadId);
-    if (idx > -1) DB.leads[idx] = lead;
+    if (idx > -1) DB.leads[idx] = { ...DB.leads[idx], ...lead };
   } else {
     DB.leads.push(lead);
   }
