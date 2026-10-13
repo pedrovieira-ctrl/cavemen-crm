@@ -51,10 +51,18 @@ if (process.env.DATABASE_URL) {
 let lock = Promise.resolve();
 const withLock = (fn) => { const run = lock.then(fn, fn); lock = run.catch(() => {}); return run; };
 
+// Pedidos do formulário de agendamento (têm recebidoTs) contam como origem "Landing Page".
+// Corrige os que entraram como "Website", incluindo cópias antigas enviadas por separadores abertos.
+const ORIGEM_FORMULARIO = 'Landing Page';
+const corrigirOrigemFormulario = (data) => {
+  (data.leads || []).forEach(l => { if (l.recebidoTs && l.origem === 'Website') l.origem = ORIGEM_FORMULARIO; });
+  return data;
+};
+
 // --- Rotas API ---
 app.get('/api/data', async (_req, res) => {
   try {
-    const data = await getDB();
+    const data = corrigirOrigemFormulario(await getDB());
     // _servedAt deixa o POST saber que leads do site chegaram depois de esta cópia ser carregada.
     res.json({ ...data, _servedAt: Date.now() });
   }
@@ -73,7 +81,7 @@ app.post('/api/data', async (req, res) => {
       const ids = new Set((incoming.leads || []).map(l => l.id));
       const missed = (current.leads || []).filter(l => l.recebidoTs && l.recebidoTs > servedAt && !ids.has(l.id));
       if (missed.length) incoming.leads = [...(incoming.leads || []), ...missed];
-      await setDB(incoming);
+      await setDB(corrigirOrigemFormulario(incoming));
     });
     res.json({ ok: true });
   }
@@ -115,7 +123,7 @@ app.post('/api/public/agendamento', async (req, res) => {
     casamento: `${m[3]}-${m[2]}-${m[1]}`,
     localidade,
     loja: LOJAS[norm(localidade)] || '',
-    origem: 'Website',
+    origem: ORIGEM_FORMULARIO,
     estado: 'novo',
     notas: 'Pedido de visita pelo formulário do site.',
     criado: hoje,
