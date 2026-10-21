@@ -688,6 +688,7 @@
           <select id="d-etapa">
             <option value="primeira_visita">1ª Visita</option>
             <option value="segunda_visita">2ª Visita</option>
+            <option value="ricardo">Ricardo</option>
             <option value="producao">Produção</option>
             <option value="primeira_prova">1ª Prova</option>
             <option value="prova_final">Prova Final</option>
@@ -1299,11 +1300,13 @@ function renderPipeline() {
   const board = document.getElementById('pipeline-board');
   const filterTipo = document.getElementById('pipeline-filter-tipo')?.value || '';
   let deals = DB.deals.filter(d => !d.estado); // só negócios em aberto (ganhos/perdidos saem do pipeline)
+  // negócios com etapa desconhecida ou vazia ficam na 1ª coluna em vez de desaparecerem
+  const etapa = d => STAGES.some(s => s.id === d.stage) ? d.stage : STAGES[0].id;
   if (activeLojaFilter) deals = deals.filter(d => d.loja === activeLojaFilter);
   if (filterTipo) deals = deals.filter(d => d.tipo === filterTipo);
 
   board.innerHTML = STAGES.map(stage => {
-    const stageDeals = deals.filter(d => d.stage === stage.id);
+    const stageDeals = deals.filter(d => etapa(d) === stage.id);
     const totalVal = stageDeals.reduce((s, d) => s + (d.valor || 0), 0);
     return `
       <div class="pipeline-col">
@@ -2080,7 +2083,7 @@ function moveToNextStage(id) {
 }
 
 // ===================== MODALS =====================
-function openNewDealModal(stage = 'contacto') {
+function openNewDealModal(stage = 'primeira_visita') {
   clearTimeout(dealAutoSaveTimer); dealAutoSaveTimer = null;
   document.getElementById('d-save-status').textContent = '';
   editingDealId = null;
@@ -2192,7 +2195,7 @@ function saveDealCore(silent = false) {
     acessorios: ['Gravata','Sapatos','Camisa','Meias','Cinto'].filter(a => document.getElementById('ac-'+a.toLowerCase()).checked),
     valor: parseFloat(document.getElementById('d-valor').value) || 0,
     sinal: parseFloat(document.getElementById('d-sinal').value) || 0,
-    stage: document.getElementById('d-etapa').value,
+    stage: document.getElementById('d-etapa').value || 'primeira_visita',
     loja: document.getElementById('d-loja').value,
     prioridade: document.getElementById('d-prioridade').value,
     origem: document.getElementById('d-origem').value,
