@@ -395,11 +395,20 @@
     <!-- CLIENTES -->
     <div id="view-clientes" class="view">
       <div class="table-container">
-        <div class="table-toolbar">
-          <div class="search-box" style="flex:1; max-width:300px;">
+        <div class="table-toolbar" style="flex-wrap:wrap;">
+          <div class="search-box" style="flex:1; min-width:200px; max-width:300px;">
             <span>🔍</span>
             <input type="text" id="search-clientes" placeholder="Pesquisar clientes...">
           </div>
+          <select id="clientes-origem" onchange="renderClientes()" style="border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; background:var(--card);"></select>
+          <select id="clientes-loja" onchange="renderClientes()" style="border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; background:var(--card);">
+            <option value="">🏪 Todas as lojas</option>
+            <option value="Guimarães">📍 Guimarães</option>
+            <option value="Braga">📍 Braga</option>
+            <option value="Porto">📍 Porto</option>
+          </select>
+          <span id="clientes-count" style="font-size:12px; color:var(--text-muted); margin-left:auto;"></span>
+          <button class="btn btn-outline btn-sm" onclick="exportClientes()">⬇ Exportar Excel</button>
           <button class="btn btn-primary btn-sm" onclick="openNewDealModal()">+ Novo Cliente</button>
         </div>
         <table>
@@ -1426,10 +1435,54 @@ function renderNegocios() {
 }
 
 // ===================== CLIENTES =====================
-function renderClientes() {
+function clientesFiltrados() {
   const search = document.getElementById('search-clientes')?.value?.toLowerCase() || '';
+  const origem = document.getElementById('clientes-origem').value;
+  const loja = document.getElementById('clientes-loja').value;
   let deals = DB.deals;
-  if (search) deals = deals.filter(d => d.nome.toLowerCase().includes(search) || (d.email||'').toLowerCase().includes(search) || (d.tel||'').includes(search));
+  if (search) deals = deals.filter(d => (d.nome||'').toLowerCase().includes(search) || (d.email||'').toLowerCase().includes(search) || (d.tel||'').includes(search));
+  if (origem) deals = deals.filter(d => (d.origem || '') === origem);
+  if (loja) deals = deals.filter(d => d.loja === loja);
+  return deals;
+}
+
+function preencherOrigensClientes() {
+  const sel = document.getElementById('clientes-origem');
+  const atual = sel.value;
+  const origens = new Set([...document.querySelectorAll('#d-origem option')].map(o => o.value));
+  DB.deals.forEach(d => { if (d.origem) origens.add(d.origem); });
+  sel.innerHTML = '<option value="">🌐 Todas as origens</option>' +
+    [...origens].sort((a, b) => a.localeCompare(b, 'pt')).map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('');
+  sel.value = origens.has(atual) ? atual : '';
+}
+
+function exportClientes() {
+  const deals = clientesFiltrados();
+  if (!deals.length) { showToast('Não há clientes para exportar com estes filtros.'); return; }
+  const etapa = d => d.estado === 'ganho' ? 'Ganho' : d.estado === 'perdido' ? 'Perdido' : (STAGES.find(s => s.id === d.stage)?.label || '');
+  const cols = [
+    ['Nome', d => d.nome], ['Telefone', d => d.tel], ['Email', d => d.email], ['Origem', d => d.origem],
+    ['Loja', d => d.loja], ['Comercial', d => d.comercial], ['Data do Casamento', d => d.casamento],
+    ['Etapa', etapa], ['Tipo de Fato', d => d.tipo], ['Valor (€)', d => d.valor], ['Sinal (€)', d => d.sinal],
+    ['Criado em', d => d.criado], ['Notas', d => d.notas],
+  ];
+  const cel = v => `"${String(v ?? '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
+  // ";" e BOM para o Excel em português abrir com colunas e acentos corretos
+  const csv = '\uFEFF' + [cols.map(c => cel(c[0])).join(';'), ...deals.map(d => cols.map(c => cel(c[1](d))).join(';'))].join('\r\n');
+  const origem = document.getElementById('clientes-origem').value;
+  const nomeFicheiro = `clientes${origem ? '_' + origem.toLowerCase().replace(/[^a-z0-9]+/gi, '-') : ''}_${new Date().toISOString().split('T')[0]}.csv`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = nomeFicheiro;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  showToast(`${deals.length} cliente${deals.length === 1 ? '' : 's'} exportado${deals.length === 1 ? '' : 's'}`);
+}
+
+function renderClientes() {
+  preencherOrigensClientes();
+  const deals = clientesFiltrados();
+  document.getElementById('clientes-count').textContent = `${deals.length} cliente${deals.length === 1 ? '' : 's'}`;
 
   document.getElementById('clientes-tbody').innerHTML = deals.length ? deals.map(d => {
     const stage = STAGES.find(s => s.id === d.stage);
