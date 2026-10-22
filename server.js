@@ -173,6 +173,12 @@ app.post('/api/public/meta-lead', express.urlencoded({ extended: false }), async
     ['Anúncio', primeiro(b, 'anuncio', 'ad_name')],
     ['Data do casamento indicada', dataTexto && !dataISO(dataTexto) ? dataTexto : ''],
   ].filter(([, v]) => v).map(([k, v]) => `${k}: ${clip(v, 120)}`);
+  // Perguntas do formulário sem campo próprio no CRM ficam nas notas, como "pergunta: resposta"
+  const conhecidos = new Set(['nome', 'full_name', 'name', 'tel', 'telefone', 'phone_number', 'phone', 'email',
+    'meta_lead_id', 'leadgen_id', 'lead_id', 'data_casamento', 'casamento', 'wedding_date', 'localidade', 'city', 'cidade',
+    'plataforma', 'platform', 'loja', 'formulario', 'form_name', 'campanha', 'campaign_name', 'anuncio', 'ad_name', 'origem', 'notas', 'key']);
+  Object.entries(b).filter(([k, v]) => !conhecidos.has(k) && v != null && typeof v !== 'object' && String(v).trim())
+    .slice(0, 30).forEach(([k, v]) => detalhes.push(`${clip(k.replace(/_/g, ' '), 80)}: ${clip(v, 300)}`));
   const hoje = new Date().toISOString().split('T')[0];
   const lead = {
     id: Date.now().toString(),
