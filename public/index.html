@@ -401,6 +401,11 @@
             <input type="text" id="search-clientes" placeholder="Pesquisar clientes...">
           </div>
           <select id="clientes-origem" onchange="renderClientes()" style="border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; background:var(--card);"></select>
+          <select id="clientes-tipo" onchange="renderClientes()" style="border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; background:var(--card);">
+            <option value="">👥 Clientes e leads</option>
+            <option value="negocio">Só clientes</option>
+            <option value="lead">Só leads</option>
+          </select>
           <select id="clientes-loja" onchange="renderClientes()" style="border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:13px; background:var(--card);">
             <option value="">🏪 Todas as lojas</option>
             <option value="Guimarães">📍 Guimarães</option>
@@ -413,7 +418,7 @@
         </div>
         <table>
           <thead>
-            <tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Casamento</th><th>Negócios</th><th>Total Gasto</th><th>Ações</th></tr>
+            <tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Casamento</th><th>Estado</th><th>Total Gasto</th><th>Ações</th></tr>
           </thead>
           <tbody id="clientes-tbody"></tbody>
         </table>
@@ -1435,73 +1440,89 @@ function renderNegocios() {
 }
 
 // ===================== CLIENTES =====================
+// Clientes = negócios + leads, para ver e exportar todos os contactos num só sítio
 function clientesFiltrados() {
   const search = document.getElementById('search-clientes')?.value?.toLowerCase() || '';
   const origem = document.getElementById('clientes-origem').value;
   const loja = document.getElementById('clientes-loja').value;
-  let deals = DB.deals;
-  if (search) deals = deals.filter(d => (d.nome||'').toLowerCase().includes(search) || (d.email||'').toLowerCase().includes(search) || (d.tel||'').includes(search));
-  if (origem) deals = deals.filter(d => (d.origem || '') === origem);
-  if (loja) deals = deals.filter(d => d.loja === loja);
-  return deals;
+  const tipo = document.getElementById('clientes-tipo').value;
+  let itens = [
+    ...(tipo === 'lead' ? [] : DB.deals.map(d => ({ tipo: 'negocio', d }))),
+    ...(tipo === 'negocio' ? [] : (DB.leads || []).map(d => ({ tipo: 'lead', d }))),
+  ];
+  if (search) itens = itens.filter(({ d }) => (d.nome||'').toLowerCase().includes(search) || (d.email||'').toLowerCase().includes(search) || (d.tel||'').includes(search));
+  if (origem) itens = itens.filter(({ d }) => (d.origem || '') === origem);
+  if (loja) itens = itens.filter(({ d }) => d.loja === loja);
+  return itens.sort((a, b) => (b.d.criado || '').localeCompare(a.d.criado || ''));
 }
 
 function preencherOrigensClientes() {
   const sel = document.getElementById('clientes-origem');
   const atual = sel.value;
   const origens = new Set([...document.querySelectorAll('#d-origem option')].map(o => o.value));
-  DB.deals.forEach(d => { if (d.origem) origens.add(d.origem); });
+  [...DB.deals, ...(DB.leads || [])].forEach(d => { if (d.origem) origens.add(d.origem); });
   sel.innerHTML = '<option value="">🌐 Todas as origens</option>' +
     [...origens].sort((a, b) => a.localeCompare(b, 'pt')).map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('');
   sel.value = origens.has(atual) ? atual : '';
 }
 
+function clienteEstado({ tipo, d }) {
+  if (tipo === 'lead') return { label: `🎯 Lead · ${(LEAD_ESTADOS[d.estado]?.label || '').replace(/^\S+\s/, '')}`, bg: '#fef3c7', color: '#92400e' };
+  if (d.estado === 'ganho') return { label: '🏆 Ganho', bg: '#d1fae5', color: '#065f46' };
+  if (d.estado === 'perdido') return { label: '✗ Perdido', bg: '#fee2e2', color: '#991b1b' };
+  const st = STAGES.find(s => s.id === d.stage);
+  return { label: st?.label || d.stage || '-', bg: st?.bg, color: st?.color };
+}
+
 function exportClientes() {
-  const deals = clientesFiltrados();
-  if (!deals.length) { showToast('Não há clientes para exportar com estes filtros.'); return; }
-  const etapa = d => d.estado === 'ganho' ? 'Ganho' : d.estado === 'perdido' ? 'Perdido' : (STAGES.find(s => s.id === d.stage)?.label || '');
+  const itens = clientesFiltrados();
+  if (!itens.length) { showToast('Não há contactos para exportar com estes filtros.'); return; }
   const cols = [
-    ['Nome', d => d.nome], ['Telefone', d => d.tel], ['Email', d => d.email], ['Origem', d => d.origem],
-    ['Loja', d => d.loja], ['Comercial', d => d.comercial], ['Data do Casamento', d => d.casamento],
-    ['Etapa', etapa], ['Tipo de Fato', d => d.tipo], ['Valor (€)', d => d.valor], ['Sinal (€)', d => d.sinal],
-    ['Criado em', d => d.criado], ['Notas', d => d.notas],
+    ['Tipo', i => i.tipo === 'lead' ? 'Lead' : 'Cliente'],
+    ['Nome', i => i.d.nome], ['Telefone', i => i.d.tel], ['Email', i => i.d.email], ['Origem', i => i.d.origem],
+    ['Loja', i => i.d.loja], ['Localidade', i => i.tipo === 'lead' ? leadLocalidade(i.d) : ''],
+    ['Comercial', i => i.d.comercial], ['Data do Casamento', i => i.d.casamento],
+    ['Estado / Etapa', i => clienteEstado(i).label.replace(/^\P{L}+/u, '')], ['Tipo de Fato', i => i.d.tipo],
+    ['Valor (€)', i => i.d.valor], ['Sinal (€)', i => i.d.sinal], ['Criado em', i => i.d.criado], ['Notas', i => i.d.notas],
   ];
   const cel = v => `"${String(v ?? '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
   // ";" e BOM para o Excel em português abrir com colunas e acentos corretos
-  const csv = '\uFEFF' + [cols.map(c => cel(c[0])).join(';'), ...deals.map(d => cols.map(c => cel(c[1](d))).join(';'))].join('\r\n');
+  const csv = '﻿' + [cols.map(c => cel(c[0])).join(';'), ...itens.map(i => cols.map(c => cel(c[1](i))).join(';'))].join('\r\n');
   const origem = document.getElementById('clientes-origem').value;
-  const nomeFicheiro = `clientes${origem ? '_' + origem.toLowerCase().replace(/[^a-z0-9]+/gi, '-') : ''}_${new Date().toISOString().split('T')[0]}.csv`;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = nomeFicheiro;
+  a.download = `contactos${origem ? '_' + origem.toLowerCase().replace(/[^a-z0-9]+/gi, '-') : ''}_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  showToast(`${deals.length} cliente${deals.length === 1 ? '' : 's'} exportado${deals.length === 1 ? '' : 's'}`);
+  showToast(`${itens.length} contacto${itens.length === 1 ? '' : 's'} exportado${itens.length === 1 ? '' : 's'}`);
 }
 
 function renderClientes() {
   preencherOrigensClientes();
-  const deals = clientesFiltrados();
-  document.getElementById('clientes-count').textContent = `${deals.length} cliente${deals.length === 1 ? '' : 's'}`;
+  const itens = clientesFiltrados();
+  const nLeads = itens.filter(i => i.tipo === 'lead').length, nClientes = itens.length - nLeads;
+  document.getElementById('clientes-count').textContent = `${nClientes} cliente${nClientes === 1 ? '' : 's'} · ${nLeads} lead${nLeads === 1 ? '' : 's'}`;
 
-  document.getElementById('clientes-tbody').innerHTML = deals.length ? deals.map(d => {
-    const stage = STAGES.find(s => s.id === d.stage);
-    const dealsCount = DB.deals.filter(x => x.email === d.email || x.tel === d.tel).length;
-    return `<tr onclick="openDetail('${d.id}')" style="cursor:pointer;">
+  document.getElementById('clientes-tbody').innerHTML = itens.length ? itens.map(i => {
+    const d = i.d, lead = i.tipo === 'lead';
+    const est = clienteEstado(i);
+    const abrir = lead ? `editLead('${d.id}')` : `openDetail('${d.id}')`;
+    return `<tr onclick="${abrir}" style="cursor:pointer;">
       <td><div class="client-name-cell">
-        <div class="avatar">${d.nome[0]}</div>
-        <div class="client-info"><div class="name">${d.nome}</div><div class="sub">${d.origem||''}</div></div>
+        <div class="avatar" style="${lead ? 'background:#f59e0b;' : ''}">${escHtml((d.nome || '?')[0])}</div>
+        <div class="client-info"><div class="name">${escHtml(d.nome)}</div><div class="sub">${escHtml(d.origem || '')}</div></div>
       </div></td>
-      <td>${d.tel ? `<a href="tel:${d.tel}" onclick="event.stopPropagation()" style="color:var(--text);">${d.tel}</a>` : '-'}</td>
-      <td>${d.email ? `<a href="mailto:${d.email}" onclick="event.stopPropagation()" style="color:var(--accent);">${d.email}</a>` : '-'}</td>
+      <td>${d.tel ? `<a href="tel:${escHtml(d.tel)}" onclick="event.stopPropagation()" style="color:var(--text);">${escHtml(d.tel)}</a>` : '-'}</td>
+      <td>${d.email ? `<a href="mailto:${escHtml(d.email)}" onclick="event.stopPropagation()" style="color:var(--accent);">${escHtml(d.email)}</a>` : '-'}</td>
       <td>${d.casamento ? formatDate(d.casamento) : '-'}</td>
-      <td><span class="stage-badge" style="background:${stage?.bg};color:${stage?.color};">${stage?.label||d.stage}</span></td>
-      <td><strong>€${(d.valor||0).toLocaleString('pt')}</strong></td>
-      <td onclick="event.stopPropagation();">
-        <button class="btn btn-outline btn-sm" onclick="editDeal('${d.id}')">✏️ Editar</button>
+      <td><span class="stage-badge" style="background:${est.bg};color:${est.color};">${est.label}</span></td>
+      <td>${lead ? '<span style="color:var(--text-muted);">-</span>' : `<strong>€${(d.valor||0).toLocaleString('pt')}</strong>`}</td>
+      <td onclick="event.stopPropagation();" style="white-space:nowrap;">
+        <button class="btn btn-outline btn-sm" onclick="${lead ? `editLead('${d.id}')` : `editDeal('${d.id}')`}">✏️ Editar</button>
+        ${lead ? `<button class="btn btn-sm" style="background:#ede9fe;color:#7c3aed;" onclick="convertLeadToNegocio('${d.id}')">→ Negócio</button>` : ''}
       </td>
     </tr>`;
-  }).join('') : `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><p>Nenhum cliente encontrado</p></div></td></tr>`;
+  }).join('') : `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><p>Nenhum contacto encontrado</p></div></td></tr>`;
 }
 
 // ===================== ATIVIDADES =====================
