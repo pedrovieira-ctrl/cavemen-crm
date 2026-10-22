@@ -141,6 +141,68 @@ app.post('/api/public/agendamento', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao guardar pedido' }); }
 });
 
+// --- Leads dos formulários do Meta (Facebook/Instagram), enviadas pelo Pabbly Connect ---
+// A chave fica na variável de ambiente META_LEADS_KEY do Render (o repositório é público).
+const primeiro = (b, ...nomes) => { for (const n of nomes) if (b[n] != null && String(b[n]).trim()) return String(b[n]).trim(); return ''; };
+const dataISO = (v) => {
+  let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : '';
+};
+
+app.post('/api/public/meta-lead', express.urlencoded({ extended: false }), async (req, res) => {
+  const chave = process.env.META_LEADS_KEY;
+  if (!chave) return res.status(503).json({ error: 'META_LEADS_KEY não configurada no servidor' });
+  if ((req.get('x-crm-key') || req.query.key) !== chave) return res.status(401).json({ error: 'Chave inválida' });
+
+  const b = req.body || {};
+  const nome = clip(primeiro(b, 'nome', 'full_name', 'name'), 120);
+  const tel = clip(primeiro(b, 'tel', 'telefone', 'phone_number', 'phone'), 40);
+  const email = clip(primeiro(b, 'email'), 160);
+  if (nome.length < 2 || (!tel && !email)) return res.status(400).json({ error: 'Falta o nome ou um contacto (telefone/email)' });
+
+  const metaLeadId = clip(primeiro(b, 'meta_lead_id', 'leadgen_id', 'lead_id'), 60);
+  const dataTexto = clip(primeiro(b, 'data_casamento', 'casamento', 'wedding_date'), 40);
+  const localidade = clip(primeiro(b, 'localidade', 'city', 'cidade'), 80);
+  const plataforma = primeiro(b, 'plataforma', 'platform').toLowerCase();
+  const lojaPedida = Object.values(LOJAS).find(l => norm(l) === norm(primeiro(b, 'loja')));
+  const detalhes = [
+    ['Formulário', primeiro(b, 'formulario', 'form_name')],
+    ['Campanha', primeiro(b, 'campanha', 'campaign_name')],
+    ['Anúncio', primeiro(b, 'anuncio', 'ad_name')],
+    ['Data do casamento indicada', dataTexto && !dataISO(dataTexto) ? dataTexto : ''],
+  ].filter(([, v]) => v).map(([k, v]) => `${k}: ${clip(v, 120)}`);
+  const hoje = new Date().toISOString().split('T')[0];
+  const lead = {
+    id: Date.now().toString(),
+    nome, tel, email,
+    casamento: dataISO(dataTexto),
+    localidade,
+    loja: lojaPedida || LOJAS[norm(localidade)] || '',
+    origem: clip(primeiro(b, 'origem'), 40) || (/^(ig|instagram)/.test(plataforma) ? 'Instagram' : 'Facebook'),
+    estado: 'novo',
+    notas: [`Lead do formulário do Meta.`, detalhes.join(' · '), clip(primeiro(b, 'notas'), 1000)].filter(Boolean).join(' '),
+    criado: hoje,
+    atualizado: hoje,
+    recebidoTs: Date.now(),
+    ...(metaLeadId && { metaLeadId }),
+  };
+  try {
+    let duplicado = false;
+    await withLock(async () => {
+      const data = await getDB();
+      // o Pabbly pode reenviar a mesma lead: não duplicar
+      duplicado = !!metaLeadId && [...(data.leads || []), ...(data.deals || [])].some(x => x.metaLeadId === metaLeadId);
+      if (duplicado) return;
+      data.leads = [...(data.leads || []), lead];
+      await setDB(data);
+    });
+    console.log(`📥 Lead do Meta${duplicado ? ' (repetida, ignorada)' : ''}: ${nome}`);
+    res.json({ ok: true, duplicado });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao guardar lead' }); }
+});
+
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
