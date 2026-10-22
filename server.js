@@ -144,11 +144,20 @@ app.post('/api/public/agendamento', async (req, res) => {
 // --- Leads dos formulários do Meta (Facebook/Instagram), enviadas pelo Pabbly Connect ---
 // A chave fica na variável de ambiente META_LEADS_KEY do Render (o repositório é público).
 const primeiro = (b, ...nomes) => { for (const n of nomes) if (b[n] != null && String(b[n]).trim()) return String(b[n]).trim(); return ''; };
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const dataISO = (v) => {
   let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (m) return `${m[1]}-${m[2]}-${m[3]}`;
   m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
-  return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : '';
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  // "11 de dez", "11 dezembro 2027": sem ano, assume a próxima vez que essa data acontece
+  m = norm(v).match(/^(\d{1,2})\s*(?:de\s+)?([a-z]{3})[a-z]*\.?(?:\s*(?:de\s+)?(\d{4}))?$/);
+  const mes = m ? MESES.indexOf(m[2]) : -1;
+  if (mes < 0 || +m[1] < 1 || +m[1] > 31) return '';
+  const hoje = new Date();
+  let ano = m[3] ? +m[3] : hoje.getFullYear();
+  if (!m[3] && new Date(ano, mes, +m[1]) < new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())) ano++;
+  return `${ano}-${String(mes + 1).padStart(2, '0')}-${m[1].padStart(2, '0')}`;
 };
 
 app.post('/api/public/meta-lead', express.urlencoded({ extended: false }), async (req, res) => {
@@ -156,14 +165,17 @@ app.post('/api/public/meta-lead', express.urlencoded({ extended: false }), async
   if (!chave) return res.status(503).json({ error: 'META_LEADS_KEY não configurada no servidor' });
   if ((req.get('x-crm-key') || req.query.key) !== chave) return res.status(401).json({ error: 'Chave inválida' });
 
-  const b = req.body || {};
+  const original = req.body || {};
+  const chaveNorm = (k) => norm(String(k)).replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const b = {};
+  Object.entries(original).forEach(([k, v]) => { const n = chaveNorm(k); if (!(n in b)) b[n] = v; });
   const nome = clip(primeiro(b, 'nome', 'full_name', 'name'), 120);
   const tel = clip(primeiro(b, 'tel', 'telefone', 'phone_number', 'phone'), 40);
   const email = clip(primeiro(b, 'email'), 160);
   if (nome.length < 2 || (!tel && !email)) return res.status(400).json({ error: 'Falta o nome ou um contacto (telefone/email)' });
 
   const metaLeadId = clip(primeiro(b, 'meta_lead_id', 'leadgen_id', 'lead_id'), 60);
-  const dataTexto = clip(primeiro(b, 'data_casamento', 'casamento', 'wedding_date'), 40);
+  const dataTexto = clip(primeiro(b, 'data_casamento', 'data_do_casamento', 'casamento', 'wedding_date'), 40);
   const localidade = clip(primeiro(b, 'localidade', 'city', 'cidade'), 80);
   const plataforma = primeiro(b, 'plataforma', 'platform').toLowerCase();
   const lojaPedida = Object.values(LOJAS).find(l => norm(l) === norm(primeiro(b, 'loja')));
@@ -171,13 +183,13 @@ app.post('/api/public/meta-lead', express.urlencoded({ extended: false }), async
     ['Formulário', primeiro(b, 'formulario', 'form_name')],
     ['Campanha', primeiro(b, 'campanha', 'campaign_name')],
     ['Anúncio', primeiro(b, 'anuncio', 'ad_name')],
-    ['Data do casamento indicada', dataTexto && !dataISO(dataTexto) ? dataTexto : ''],
+    ['Data do casamento indicada', dataTexto && (!dataISO(dataTexto) || !/\d{4}/.test(dataTexto)) ? dataTexto : ''],
   ].filter(([, v]) => v).map(([k, v]) => `${k}: ${clip(v, 120)}`);
   // Perguntas do formulário sem campo próprio no CRM ficam nas notas, como "pergunta: resposta"
   const conhecidos = new Set(['nome', 'full_name', 'name', 'tel', 'telefone', 'phone_number', 'phone', 'email',
-    'meta_lead_id', 'leadgen_id', 'lead_id', 'data_casamento', 'casamento', 'wedding_date', 'localidade', 'city', 'cidade',
+    'meta_lead_id', 'leadgen_id', 'lead_id', 'data_casamento', 'data_do_casamento', 'casamento', 'wedding_date', 'localidade', 'city', 'cidade',
     'plataforma', 'platform', 'loja', 'formulario', 'form_name', 'campanha', 'campaign_name', 'anuncio', 'ad_name', 'origem', 'notas', 'key']);
-  Object.entries(b).filter(([k, v]) => !conhecidos.has(k) && v != null && typeof v !== 'object' && String(v).trim())
+  Object.entries(original).filter(([k, v]) => !conhecidos.has(chaveNorm(k)) && v != null && typeof v !== 'object' && String(v).trim())
     .slice(0, 30).forEach(([k, v]) => detalhes.push(`${clip(k.replace(/_/g, ' '), 80)}: ${clip(v, 300)}`));
   const hoje = new Date().toISOString().split('T')[0];
   const lead = {
