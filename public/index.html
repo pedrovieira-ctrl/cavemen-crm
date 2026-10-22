@@ -1059,7 +1059,7 @@ function renderLeads() {
       </div></td>
       <td>${l.tel ? `<a href="tel:${l.tel}" style="color:var(--accent);">${l.tel}</a>` : '-'}${l.email ? `<br><span style="font-size:11px;color:var(--text-muted);">${l.email}</span>` : ''}</td>
       <td>${l.casamento ? `<div style="font-weight:600;">${formatDate(l.casamento)}</div><div class="${daysUntil<=30?'countdown-urgent':daysUntil<=60?'countdown-soon':'countdown-ok'}" style="font-size:11px;">${daysUntil}d</div>` : '-'}</td>
-      <td>${l.loja ? `<span class="loja-tag ${lojaClass}">${l.loja}</span>` : '-'}${leadLocalidade(l) ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${escHtml(leadLocalidade(l))}</div>` : ''}</td>
+      <td>${l.loja ? `<span class="loja-tag ${lojaClass}">${l.loja}</span>` : '-'}</td>
       <td><span style="font-size:12px;">${l.origem||'-'}</span></td>
       <td><span class="stage-badge" style="background:${est.bg};color:${est.color};">${est.label}</span></td>
       <td style="font-size:12px;color:var(--text-muted);">${formatDate(l.criado)}</td>
