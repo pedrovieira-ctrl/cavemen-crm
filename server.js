@@ -148,8 +148,8 @@ const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'o
 const dataISO = (v) => {
   let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
-  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4}|\d{2})$/);
+  if (m) return `${m[3].length === 2 ? '20' + m[3] : m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
   // "11 de dez", "11 dezembro 2027": sem ano, assume a próxima vez que essa data acontece
   m = norm(v).match(/^(\d{1,2})\s*(?:de\s+)?([a-z]{3})[a-z]*\.?(?:\s*(?:de\s+)?(\d{4}))?$/);
   const mes = m ? MESES.indexOf(m[2]) : -1;
@@ -178,11 +178,14 @@ app.post('/api/public/meta-lead', express.urlencoded({ extended: false }), async
   const dataTexto = clip(primeiro(b, 'data_casamento', 'data_do_casamento', 'casamento', 'wedding_date'), 40);
   const localidade = clip(primeiro(b, 'localidade', 'city', 'cidade'), 80);
   const plataforma = primeiro(b, 'plataforma', 'platform').toLowerCase();
-  const lojaPedida = Object.values(LOJAS).find(l => norm(l) === norm(primeiro(b, 'loja')));
+  // a resposta pode vir com texto a mais (ex.: "loja_de_guimarães"): basta conter o nome da loja
+  const lojaTexto = primeiro(b, 'loja');
+  const lojaPedida = Object.entries(LOJAS).find(([k]) => norm(lojaTexto).includes(k))?.[1];
   const detalhes = [
     ['Formulário', primeiro(b, 'formulario', 'form_name')],
     ['Campanha', primeiro(b, 'campanha', 'campaign_name')],
     ['Anúncio', primeiro(b, 'anuncio', 'ad_name')],
+    ['Loja indicada', lojaTexto && !lojaPedida ? lojaTexto : ''],
     ['Data do casamento indicada', dataTexto && (!dataISO(dataTexto) || !/\d{4}/.test(dataTexto)) ? dataTexto : ''],
   ].filter(([, v]) => v).map(([k, v]) => `${k}: ${clip(v, 120)}`);
   // Perguntas do formulário sem campo próprio no CRM ficam nas notas, como "pergunta: resposta"
