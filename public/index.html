@@ -686,6 +686,7 @@
       <div class="form-row">
         <div class="form-group" style="flex:1.2;"><label>Origem</label>
           <select id="d-origem">
+            <option value="">— Selecionar origem —</option>
             <option value="Recomendação">Recomendação</option>
             <option value="Instagram">Instagram</option>
             <option value="Facebook">Facebook</option>
@@ -1243,7 +1244,7 @@ function convertLeadToNegocio(id) {
   document.getElementById('d-email').value = l.email || '';
   document.getElementById('d-casamento').value = l.casamento || '';
   document.getElementById('d-loja').value = l.loja || '';
-  document.getElementById('d-origem').value = l.origem || 'Recomendação';
+  document.getElementById('d-origem').value = l.origem || '';
   document.getElementById('d-notas').value = l.notas || '';
   // Guarda o id da lead para remover após converter
   document.getElementById('modal-deal').dataset.fromLead = id;
@@ -2226,6 +2227,9 @@ function openNewDealModal(stage = 'primeira_visita') {
   document.getElementById('d-casamento').value = '';
   document.getElementById('d-levantamento').value = '';
   document.getElementById('d-entrega-loja').value = '';
+  document.getElementById('d-origem').value = '';
+  delete document.getElementById('modal-deal').dataset.fromLead;
+  dealModalNovo = true;
   document.getElementById('modal-deal').classList.add('open');
   updatePDFList();
 }
@@ -2272,13 +2276,32 @@ function editDeal(id) {
   document.getElementById('d-etapa').value = d.stage || 'primeira_visita';
   document.getElementById('d-loja').value = d.loja || '';
   document.getElementById('d-prioridade').value = d.prioridade || '';
-  document.getElementById('d-origem').value = d.origem || 'Recomendação';
+  document.getElementById('d-origem').value = d.origem || '';
+  dealModalNovo = false;
   document.getElementById('d-notas').value = d.notas || '';
   document.getElementById('modal-deal').classList.add('open');
   updatePDFList();
 }
 
 let dealAutoSaveTimer = null;
+let dealModalNovo = false;
+
+// Negócio novo criado à mão para alguém que já é lead: usar a origem e a data da lead e convertê-la
+document.getElementById('d-tel').addEventListener('change', () => {
+  const modal = document.getElementById('modal-deal');
+  const digitos = document.getElementById('d-tel').value.replace(/\D/g, '').slice(-9);
+  if (!dealModalNovo || modal.dataset.fromLead || digitos.length < 9) return;
+  const l = (DB.leads || []).find(x => (x.tel || '').replace(/\D/g, '').slice(-9) === digitos);
+  if (!l) return;
+  const preencher = (id, v) => { const el = document.getElementById(id); if (!el.value && v) el.value = v; };
+  preencher('d-origem', l.origem);
+  preencher('d-casamento', l.casamento);
+  preencher('d-email', l.email);
+  preencher('d-loja', l.loja);
+  modal.dataset.fromLead = l.id;
+  showToast(`Este telefone é da lead ${l.nome} (${l.origem || 'sem origem'}): origem e data preenchidas. A lead passa a negócio.`);
+  scheduleDealAutoSave();
+});
 
 function scheduleDealAutoSave() {
   clearTimeout(dealAutoSaveTimer);
@@ -2295,6 +2318,7 @@ function saveDealCore(silent = false) {
   const nome = document.getElementById('d-nome').value.trim();
   if (!nome) { if (!silent) showToast('Nome do noivo obrigatório!'); return false; }
   if (!document.getElementById('d-loja').value) { if (!silent) showToast('Tens de selecionar a loja!'); return false; }
+  if (!silent && !document.getElementById('d-origem').value) { showToast('Escolhe a origem!'); return false; }
   const wasNew = !editingDealId;
   const deal = {
     id: editingDealId || Date.now().toString(),
@@ -2345,7 +2369,7 @@ function saveDealCore(silent = false) {
   }
   // Se convertido de lead, remove a lead
   const fromLead = document.getElementById('modal-deal').dataset.fromLead;
-  if (fromLead && wasNew) {
+  if (fromLead) {
     DB.leads = (DB.leads || []).filter(l => l.id !== fromLead);
     delete document.getElementById('modal-deal').dataset.fromLead;
     showToast(`Lead convertida em negócio: ${nome} ✅`);
