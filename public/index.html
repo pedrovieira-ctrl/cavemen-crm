@@ -332,6 +332,7 @@
         <div class="filter-chip" data-estado="qualificado" onclick="filterLeads(this)">✅ Qualificado</div>
         <div class="filter-chip" data-estado="nao_qualificado" onclick="filterLeads(this)">❌ Não Qualificado</div>
       </div>
+      <div id="leads-origem-chips" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;"></div>
       <div class="table-container">
         <table>
           <thead>
@@ -923,6 +924,7 @@ let editingLeadId = null;
 let activeLojaFilter = '';
 let activeLojaFilterLeads = '';
 let leadsEstadoFilter = '';
+let leadsOrigemFilter = '';
 let calCurrentDate = new Date();
 let activityFilter = 'pendente';
 let activeLojaFilterAtiv = '';
@@ -1094,8 +1096,13 @@ function setLojaFilterLeads(btn) {
   renderLeads();
 }
 
+function setLeadsOrigem(o) {
+  leadsOrigemFilter = o;
+  renderLeads();
+}
+
 function filterLeads(el) {
-  document.querySelectorAll('#view-leads .filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#view-leads .filter-chip[data-estado]').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   leadsEstadoFilter = el.dataset.estado;
   renderLeads();
@@ -1106,6 +1113,16 @@ function renderLeads() {
   let leads = [...DB.leads];
   if (activeLojaFilterLeads) leads = leads.filter(l => l.loja === activeLojaFilterLeads);
   if (leadsEstadoFilter) leads = leads.filter(l => l.estado === leadsEstadoFilter);
+
+  // Filtros por origem, com quantas leads há em cada uma (respeitando loja e estado)
+  const porOrigem = {};
+  leads.forEach(l => { const o = l.origem || 'Sem origem'; porOrigem[o] = (porOrigem[o] || 0) + 1; });
+  if (leadsOrigemFilter && !porOrigem[leadsOrigemFilter]) porOrigem[leadsOrigemFilter] = 0;
+  const chip = (o, label, n) => `<div class="filter-chip ${leadsOrigemFilter === o ? 'active' : ''}" onclick="setLeadsOrigem(this.dataset.origem)" data-origem="${escHtml(o)}">${escHtml(label)} (${n})</div>`;
+  document.getElementById('leads-origem-chips').innerHTML = chip('', '🌐 Todas as origens', leads.length) +
+    Object.entries(porOrigem).sort((a, b) => b[1] - a[1]).map(([o, n]) => chip(o, o, n)).join('');
+  if (leadsOrigemFilter) leads = leads.filter(l => (l.origem || 'Sem origem') === leadsOrigemFilter);
+
   leads = leads.sort((a, b) => (a.criado||'') < (b.criado||'') ? 1 : -1);
 
   document.getElementById('leads-tbody').innerHTML = leads.length ? leads.map(l => {
