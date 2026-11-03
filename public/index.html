@@ -932,12 +932,19 @@ let fechadosLoja = '';
 let casamentosFiltro = 'contactar';
 let casamentosLoja = '';
 
+// DB_BASE = última versão confirmada pelo servidor. Gravar envia só as diferenças em relação a ela,
+// para que várias pessoas com o CRM aberto não apaguem o trabalho umas das outras.
+let DB_BASE = null;
+const COLECOES = ['deals', 'activities', 'leads'];
+const copia = (x) => JSON.parse(JSON.stringify(x));
+
 async function loadDB() {
   try {
     const res = await fetch('/api/data');
     if (!res.ok) throw new Error('API error');
     DB = await res.json();
-    if (!DB.deals) DB = { deals: [], activities: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } };
+    if (!DB.deals) DB = { deals: [], activities: [], leads: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } };
+    DB_BASE = copia(DB);
     if (DB.deals.length === 0) loadSampleData();
     else renderAll();
   } catch(e) {
@@ -947,13 +954,59 @@ async function loadDB() {
     else loadSampleData();
   }
 }
-function saveDB() {
-  fetch('/api/data', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(DB)
-  }).catch(() => localStorage.setItem('noivos_crm_v2', JSON.stringify(DB)));
+
+function calcularAlteracoes(base, atual) {
+  const p = {};
+  for (const c of COLECOES) {
+    const antes = new Map(((base && base[c]) || []).map(x => [x.id, JSON.stringify(x)]));
+    const ids = new Set((atual[c] || []).map(x => x.id));
+    const upsert = (atual[c] || []).filter(x => antes.get(x.id) !== JSON.stringify(x));
+    const remove = [...antes.keys()].filter(id => !ids.has(id));
+    if (upsert.length || remove.length) p[c] = { upsert, remove };
+  }
+  if (JSON.stringify(base && base.config) !== JSON.stringify(atual.config)) p.config = atual.config;
+  return Object.keys(p).length ? p : null;
 }
+
+let filaGravacao = Promise.resolve();
+function saveDB() {
+  filaGravacao = filaGravacao.then(async () => {
+    const enviado = copia(DB);
+    const alteracoes = calcularAlteracoes(DB_BASE, enviado);
+    if (!alteracoes) return;
+    try {
+      const res = await fetch('/api/patch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(alteracoes) });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      DB_BASE = enviado;
+    } catch (e) {
+      // fica por gravar: as diferenças continuam a contar e seguem na próxima gravação
+      console.warn('Falha ao gravar:', e);
+      localStorage.setItem('noivos_crm_v2', JSON.stringify(DB));
+      showToast('⚠️ Não foi possível gravar. Verifica a ligação à internet.');
+    }
+  });
+  return filaGravacao;
+}
+
+// Buscar o que os colegas mudaram, sem interromper quem está a preencher um formulário
+async function atualizarDoServidor() {
+  if (document.querySelector('.modal-overlay.open') || !DB_BASE) return;
+  await filaGravacao;
+  if (calcularAlteracoes(DB_BASE, DB)) { saveDB(); return; }
+  try {
+    const res = await fetch('/api/data');
+    if (!res.ok) return;
+    const novo = await res.json();
+    if (document.querySelector('.modal-overlay.open') || calcularAlteracoes(DB_BASE, DB)) return;
+    if (JSON.stringify(novo) === JSON.stringify(DB_BASE)) return;
+    DB = novo;
+    DB_BASE = copia(novo);
+    renderAll();
+  } catch (e) { /* sem ligação: tenta na próxima vez */ }
+}
+setInterval(atualizarDoServidor, 30000);
+window.addEventListener('focus', atualizarDoServidor);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) atualizarDoServidor(); });
 
 function loadSampleData() {
   const today = new Date();

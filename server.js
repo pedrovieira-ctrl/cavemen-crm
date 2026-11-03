@@ -61,32 +61,38 @@ const corrigirOrigemFormulario = (data) => {
 
 // --- Rotas API ---
 app.get('/api/data', async (_req, res) => {
-  try {
-    const data = corrigirOrigemFormulario(await getDB());
-    // _servedAt deixa o POST saber que leads do site chegaram depois de esta cópia ser carregada.
-    res.json({ ...data, _servedAt: Date.now() });
-  }
+  try { res.json(corrigirOrigemFormulario(await getDB())); }
   catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao carregar dados' }); }
 });
 
-app.post('/api/data', async (req, res) => {
+// Cada separador envia só o que mudou (por id), para não apagar o que os colegas criaram entretanto.
+const COLECOES = ['deals', 'activities', 'leads'];
+app.post('/api/patch', async (req, res) => {
   try {
+    const p = req.body || {};
     await withLock(async () => {
-      const incoming = req.body || {};
-      const servedAt = Number(incoming._servedAt) || 0;
-      delete incoming._servedAt;
-      // Um separador do CRM aberto há muito tempo guarda a sua cópia inteira:
-      // manter as leads do site que entraram depois dessa cópia ter sido carregada.
-      const current = await getDB();
-      const ids = new Set((incoming.leads || []).map(l => l.id));
-      const missed = (current.leads || []).filter(l => l.recebidoTs && l.recebidoTs > servedAt && !ids.has(l.id));
-      if (missed.length) incoming.leads = [...(incoming.leads || []), ...missed];
-      await setDB(corrigirOrigemFormulario(incoming));
+      const data = await getDB();
+      for (const c of COLECOES) {
+        if (!p[c]) continue;
+        const remover = new Set(p[c].remove || []);
+        const lista = (data[c] || []).filter(x => !remover.has(x.id));
+        for (const item of p[c].upsert || []) {
+          const i = lista.findIndex(x => x.id === item.id);
+          if (i > -1) lista[i] = item; else lista.push(item);
+        }
+        data[c] = lista;
+      }
+      if (p.config) data.config = p.config;
+      await setDB(corrigirOrigemFormulario(data));
     });
     res.json({ ok: true });
   }
   catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao guardar dados' }); }
 });
+
+// Versão antiga da página (separadores abertos antes da atualização) enviava a cópia inteira e
+// apagava o trabalho dos colegas: recusar e pedir para recarregar.
+app.post('/api/data', (_req, res) => res.status(409).json({ error: 'Versão antiga do CRM: recarrega a página.' }));
 
 // --- Formulário público "Agenda a tua visita" (página /noivos do site dos relatórios) ---
 const PUBLIC_ORIGINS = ['https://encomendascavemen-cmd.github.io', 'https://crm-clientes-site-1.onrender.com', 'http://localhost:5001', 'http://127.0.0.1:5001'];
