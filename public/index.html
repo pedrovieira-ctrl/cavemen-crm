@@ -624,6 +624,7 @@
       <div class="form-row">
         <div class="form-group"><label>Loja *</label>
           <select id="l-loja">
+            <option value="">— Selecionar loja —</option>
             <option value="Guimarães">📍 Guimarães</option>
             <option value="Braga">📍 Braga</option>
             <option value="Porto">📍 Porto</option>
@@ -1151,7 +1152,7 @@ function openNewLeadModal() {
   document.getElementById('modal-lead-title').textContent = 'Nova Lead';
   ['l-nome','l-tel','l-email','l-notas','l-localidade'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('l-casamento').value = '';
-  document.getElementById('l-loja').value = activeLojaFilterLeads || 'Guimarães';
+  document.getElementById('l-loja').value = activeLojaFilterLeads || '';
   document.getElementById('l-origem').value = 'Recomendação';
   document.getElementById('l-estado').value = 'novo';
   document.getElementById('modal-lead').classList.add('open');
@@ -1167,7 +1168,7 @@ function editLead(id) {
   document.getElementById('l-email').value = l.email || '';
   document.getElementById('l-casamento').value = l.casamento || '';
   document.getElementById('l-localidade').value = leadLocalidade(l);
-  document.getElementById('l-loja').value = l.loja || 'Guimarães';
+  document.getElementById('l-loja').value = l.loja || '';
   document.getElementById('l-origem').value = l.origem || 'Recomendação';
   document.getElementById('l-estado').value = l.estado || 'novo';
   document.getElementById('l-notas').value = l.notas || '';
@@ -1179,6 +1180,7 @@ function saveLead() {
   if (!nome) { showToast('Nome obrigatório!'); return; }
   const tel = document.getElementById('l-tel').value.trim();
   if (!tel) { showToast('Telefone obrigatório!'); return; }
+  if (!document.getElementById('l-loja').value) { showToast('Escolhe a loja!'); return; }
   if (!DB.leads) DB.leads = [];
   const lead = {
     id: editingLeadId || Date.now().toString(),
