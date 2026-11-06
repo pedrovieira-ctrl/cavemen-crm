@@ -992,8 +992,27 @@ function saveDB() {
   return filaGravacao;
 }
 
+// Avisar quando há uma versão nova da página, para ninguém ficar dias com uma versão antiga aberta
+let versaoCarregada = null;
+async function verificarVersao() {
+  try {
+    const { versao } = await fetch('/api/versao').then(r => r.json());
+    if (!versaoCarregada) { versaoCarregada = versao; return; }
+    if (versao !== versaoCarregada && !document.getElementById('aviso-versao')) {
+      const aviso = document.createElement('div');
+      aviso.id = 'aviso-versao';
+      aviso.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#f59e0b;color:#111;font-weight:700;font-size:14px;text-align:center;padding:10px;cursor:pointer;';
+      aviso.textContent = '🔄 Há uma versão nova do CRM. Clica aqui para atualizar (o teu trabalho fica guardado).';
+      aviso.onclick = async () => { saveDB(); await filaGravacao; location.reload(); };
+      document.body.appendChild(aviso);
+    }
+  } catch (e) { /* sem ligação: tenta na próxima vez */ }
+}
+verificarVersao();
+
 // Buscar o que os colegas mudaram, sem interromper quem está a preencher um formulário
 async function atualizarDoServidor() {
+  verificarVersao();
   if (document.querySelector('.modal-overlay.open') || !DB_BASE) return;
   await filaGravacao;
   if (calcularAlteracoes(DB_BASE, DB)) { saveDB(); return; }

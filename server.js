@@ -61,9 +61,27 @@ const corrigirOrigemFormulario = (data) => {
 
 // --- Rotas API ---
 app.get('/api/data', async (_req, res) => {
-  try { res.json(corrigirOrigemFormulario(await getDB())); }
+  try {
+    const { _removidos, ...data } = corrigirOrigemFormulario(await getDB());
+    res.set('Cache-Control', 'no-store');
+    res.json({ ...data, _servedAt: Date.now() });
+  }
   catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao carregar dados' }); }
 });
+
+// Versão da página: cada separador compara com a que carregou e avisa quando há uma nova
+const fs = require('fs');
+const VERSAO = require('crypto').createHash('md5').update(fs.readFileSync(path.join(__dirname, 'public', 'index.html'))).digest('hex').slice(0, 10);
+app.get('/api/versao', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ versao: VERSAO }); });
+
+// _ts = quando o servidor gravou o item; _removidos = ids apagados (para não ressuscitarem)
+const marcarRemovidos = (data, ids) => {
+  if (!ids.length) return;
+  const agora = Date.now(), limite = agora - 90 * 86400000;
+  const r = Object.fromEntries(Object.entries(data._removidos || {}).filter(([, t]) => t > limite));
+  ids.forEach(id => { r[id] = agora; });
+  data._removidos = r;
+};
 
 // Cada separador envia só o que mudou (por id), para não apagar o que os colegas criaram entretanto.
 const COLECOES = ['deals', 'activities', 'leads'];
@@ -76,9 +94,11 @@ app.post('/api/patch', async (req, res) => {
         if (!p[c]) continue;
         const remover = new Set(p[c].remove || []);
         const lista = (data[c] || []).filter(x => !remover.has(x.id));
+        marcarRemovidos(data, [...remover]);
         for (const item of p[c].upsert || []) {
+          const novo = { ...item, _ts: Date.now() };
           const i = lista.findIndex(x => x.id === item.id);
-          if (i > -1) lista[i] = item; else lista.push(item);
+          if (i > -1) lista[i] = novo; else lista.push(novo);
         }
         data[c] = lista;
       }
@@ -92,7 +112,50 @@ app.post('/api/patch', async (req, res) => {
 
 // Versão antiga da página (separadores abertos antes da atualização) enviava a cópia inteira e
 // apagava o trabalho dos colegas: recusar e pedir para recarregar.
-app.post('/api/data', (_req, res) => res.status(409).json({ error: 'Versão antiga do CRM: recarrega a página.' }));
+// Separadores com a versão antiga da página (anterior a 03/11) enviam a cópia inteira dos dados.
+// Em vez de a gravar por cima de tudo, junta-se só o que esse separador mudou desde que carregou.
+const semTs = (x) => { const { _ts, ...r } = x; return JSON.stringify(r); };
+app.post('/api/data', async (req, res) => {
+  const incoming = req.body || {};
+  const servedAt = Number(incoming._servedAt) || 0;
+  if (!servedAt || !Array.isArray(incoming.deals)) return res.status(409).json({ error: 'Versão antiga do CRM: recarrega a página.' });
+  const diaCarregado = new Date(servedAt).toISOString().split('T')[0];
+  try {
+    const resumo = {};
+    await withLock(async () => {
+      const data = await getDB();
+      const removidos = data._removidos || {};
+      for (const c of COLECOES) {
+        const recebidos = new Map((incoming[c] || []).map(x => [x.id, x]));
+        const resultado = [], apagados = [];
+        let alterados = 0, novos = 0;
+        for (const atual of data[c] || []) {
+          const dele = recebidos.get(atual.id);
+          recebidos.delete(atual.id);
+          // mudou no servidor depois de o separador antigo ter carregado?
+          const mudouDepois = (atual._ts || 0) > servedAt || (atual.recebidoTs || 0) > servedAt
+            || (atual.criado || '') >= diaCarregado || (atual.atualizado || '') > diaCarregado;
+          if (!dele) {
+            if (mudouDepois) resultado.push(atual); else apagados.push(atual.id);
+          } else if (semTs(dele) !== semTs(atual) && !((atual._ts || 0) > servedAt) && !((atual.atualizado || '') > (dele.atualizado || ''))) {
+            resultado.push(atual._ts ? { ...dele, _ts: atual._ts } : dele); alterados++;
+          } else resultado.push(atual);
+        }
+        for (const dele of recebidos.values()) {
+          if (removidos[dele.id]) continue;
+          resultado.push(dele); novos++;
+        }
+        marcarRemovidos(data, apagados);
+        data[c] = resultado;
+        resumo[c] = { alterados, novos, apagados: apagados.length };
+      }
+      await setDB(corrigirOrigemFormulario(data));
+    });
+    console.log('🔀 Gravação de separador antigo juntada:', JSON.stringify(resumo));
+    res.json({ ok: true });
+  }
+  catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao guardar dados' }); }
+});
 
 // --- Formulário público "Agenda a tua visita" (página /noivos do site dos relatórios) ---
 const PUBLIC_ORIGINS = ['https://encomendascavemen-cmd.github.io', 'https://crm-clientes-site-1.onrender.com', 'http://localhost:5001', 'http://127.0.0.1:5001'];
