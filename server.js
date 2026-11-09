@@ -66,7 +66,7 @@ app.get('/api/data', async (_req, res) => {
     res.set('Cache-Control', 'no-store');
     res.json({ ...data, _servedAt: Date.now() });
   }
-  catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao carregar dados' }); }
+  catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao carregar dados', detalhe: String(e && e.message || e).slice(0, 300) }); }
 });
 
 // Versão da página: cada separador compara com a que carregou e avisa quando há uma nova
