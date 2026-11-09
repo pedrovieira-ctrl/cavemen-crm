@@ -47,6 +47,21 @@ if (process.env.DATABASE_URL) {
   };
 }
 
+// Cópia em memória: a base de dados (Neon, plano gratuito, com limite de transferência) só é lida
+// ao arrancar; os pedidos são servidos da memória e cada gravação atualiza a memória e a base de dados.
+const lerBase = getDB, gravarBase = setDB;
+let CACHE = null;
+let REV = Date.now();
+getDB = async () => {
+  if (!CACHE) CACHE = await lerBase();
+  return structuredClone(CACHE);
+};
+setDB = async (data) => {
+  await gravarBase(data);
+  CACHE = structuredClone(data);
+  REV = Date.now();
+};
+
 // Serializa leituras+escritas para que um pedido do site não se perca entre o GET e o SET de outro pedido.
 let lock = Promise.resolve();
 const withLock = (fn) => { const run = lock.then(fn, fn); lock = run.catch(() => {}); return run; };
@@ -64,7 +79,7 @@ app.get('/api/data', async (_req, res) => {
   try {
     const { _removidos, ...data } = corrigirOrigemFormulario(await getDB());
     res.set('Cache-Control', 'no-store');
-    res.json({ ...data, _servedAt: Date.now() });
+    res.json({ ...data, _servedAt: Date.now(), _rev: REV });
   }
   catch (e) { console.error(e); res.status(500).json({ error: 'Erro ao carregar dados', detalhe: String(e && e.message || e).slice(0, 300) }); }
 });
@@ -72,7 +87,7 @@ app.get('/api/data', async (_req, res) => {
 // Versão da página: cada separador compara com a que carregou e avisa quando há uma nova
 const fs = require('fs');
 const VERSAO = require('crypto').createHash('md5').update(fs.readFileSync(path.join(__dirname, 'public', 'index.html'))).digest('hex').slice(0, 10);
-app.get('/api/versao', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ versao: VERSAO }); });
+app.get('/api/versao', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ versao: VERSAO, rev: REV }); });
 
 // _ts = quando o servidor gravou o item; _removidos = ids apagados (para não ressuscitarem)
 const marcarRemovidos = (data, ids) => {
@@ -88,6 +103,10 @@ const COLECOES = ['deals', 'activities', 'leads'];
 app.post('/api/patch', async (req, res) => {
   try {
     const p = req.body || {};
+    const muitos = COLECOES.some(c => ((p[c] && p[c].upsert) || []).length > 25);
+    if (muitos && req.get('x-crm-restauro') !== 'sim') {
+      return res.status(409).json({ error: 'Gravação demasiado grande: recarrega a página.' });
+    }
     await withLock(async () => {
       const data = await getDB();
       for (const c of COLECOES) {

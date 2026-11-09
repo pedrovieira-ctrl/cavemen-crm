@@ -942,20 +942,32 @@ let DB_BASE = null;
 const COLECOES = ['deals', 'activities', 'leads'];
 const copia = (x) => JSON.parse(JSON.stringify(x));
 
+let revCarregada = null;
+// Se não conseguir carregar, NÃO mostra dados de exemplo nem cópias antigas (gravá-los apagaria dados reais):
+// avisa e tenta outra vez.
 async function loadDB() {
   try {
     const res = await fetch('/api/data');
-    if (!res.ok) throw new Error('API error');
-    DB = await res.json();
-    if (!DB.deals) DB = { deals: [], activities: [], leads: [], config: { empresa: 'Fatos & Noivos', moeda: 'EUR' } };
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const dados = await res.json();
+    if (!Array.isArray(dados.deals)) throw new Error('resposta sem dados');
+    DB = dados;
+    if (!DB.leads) DB.leads = [];
+    if (!DB.activities) DB.activities = [];
     DB_BASE = copia(DB);
-    if (DB.deals.length === 0) loadSampleData();
-    else renderAll();
+    revCarregada = DB._rev || null;
+    document.getElementById('aviso-ligacao')?.remove();
+    renderAll();
   } catch(e) {
-    console.warn('Offline mode:', e);
-    const saved = localStorage.getItem('noivos_crm_v2');
-    if (saved) { DB = JSON.parse(saved); renderAll(); }
-    else loadSampleData();
+    console.warn('Não foi possível carregar os dados:', e);
+    if (!document.getElementById('aviso-ligacao')) {
+      const aviso = document.createElement('div');
+      aviso.id = 'aviso-ligacao';
+      aviso.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc2626;color:#fff;font-weight:700;font-size:14px;text-align:center;padding:10px;';
+      aviso.textContent = '⚠️ Não foi possível carregar os dados do CRM. A tentar outra vez… Não faças alterações até esta mensagem desaparecer.';
+      document.body.appendChild(aviso);
+    }
+    setTimeout(loadDB, 20000);
   }
 }
 
@@ -974,6 +986,7 @@ function calcularAlteracoes(base, atual) {
 
 let filaGravacao = Promise.resolve();
 function saveDB() {
+  if (!DB_BASE) { showToast('⚠️ O CRM ainda não carregou os dados: a alteração não foi gravada.'); return filaGravacao; }
   filaGravacao = filaGravacao.then(async () => {
     const enviado = copia(DB);
     const alteracoes = calcularAlteracoes(DB_BASE, enviado);
@@ -994,9 +1007,11 @@ function saveDB() {
 
 // Avisar quando há uma versão nova da página, para ninguém ficar dias com uma versão antiga aberta
 let versaoCarregada = null;
+let revServidor = null;
 async function verificarVersao() {
   try {
-    const { versao } = await fetch('/api/versao').then(r => r.json());
+    const { versao, rev } = await fetch('/api/versao').then(r => r.json());
+    revServidor = rev;
     if (!versaoCarregada) { versaoCarregada = versao; return; }
     if (versao !== versaoCarregada && !document.getElementById('aviso-versao')) {
       const aviso = document.createElement('div');
@@ -1011,17 +1026,19 @@ async function verificarVersao() {
 verificarVersao();
 
 // Buscar o que os colegas mudaram, sem interromper quem está a preencher um formulário
+// Pergunta primeiro (pedido pequeno) se houve alterações; só descarrega os dados quando há.
 async function atualizarDoServidor() {
-  verificarVersao();
+  await verificarVersao();
   if (document.querySelector('.modal-overlay.open') || !DB_BASE) return;
   await filaGravacao;
   if (calcularAlteracoes(DB_BASE, DB)) { saveDB(); return; }
+  if (revServidor && revServidor === revCarregada) return;
   try {
     const res = await fetch('/api/data');
     if (!res.ok) return;
     const novo = await res.json();
-    if (document.querySelector('.modal-overlay.open') || calcularAlteracoes(DB_BASE, DB)) return;
-    if (JSON.stringify(novo) === JSON.stringify(DB_BASE)) return;
+    if (!Array.isArray(novo.deals) || document.querySelector('.modal-overlay.open') || calcularAlteracoes(DB_BASE, DB)) return;
+    revCarregada = novo._rev || null;
     DB = novo;
     DB_BASE = copia(novo);
     renderAll();
